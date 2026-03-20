@@ -2,6 +2,7 @@ package com.example.dukatrack.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -12,15 +13,22 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import com.example.dukatrack.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -358,6 +366,10 @@ fun SummaryCard(
 
 @Composable
 fun SalesChartCard() {
+    var showMenu by remember { mutableStateOf(false) }
+    val mperiods = listOf("Weekly", "Monthly", "Yearly")
+    var selectedperiod by remember { mutableStateOf("Weekly") }
+    var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -376,17 +388,24 @@ fun SalesChartCard() {
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold, fontSize = 18.sp),
                     color = TextDark
                 )
-                Surface(
-                    color = LightGrayBg,
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, BorderGray)
-                ) {
-                    Text(
-                        "Weekly \u25BE",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextMuted,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                Surface(modifier = Modifier.clickable { showMenu = true }.
+                    onGloballyPositioned { coordinates -> mTextFieldSize = coordinates.size.toSize() },
+                    shape = RoundedCornerShape(16.dp),
+                    color = PrimaryGreen) {
+                    Text(text = selectedperiod,
+                        style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false },
+                    modifier = Modifier.width(mTextFieldSize.width.dp)
+                ) {mperiods.forEach{label ->
+                    DropdownMenuItem(
+                        text = { Text(text = label) },
+                        onClick = { selectedperiod = label
+                            showMenu = false }
+                    ) }
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
