@@ -4,9 +4,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,8 +34,8 @@ fun DashboardScreen() {
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                modifier = Modifier.width(280.dp),
-                drawerContainerColor = Color.White,
+                modifier = Modifier.width(240.dp),
+                drawerContainerColor = DarkNavy,
                 drawerShape = RoundedCornerShape(0.dp)
             ) {
                 SidebarContent()
@@ -41,48 +44,68 @@ fun DashboardScreen() {
     ) {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "Dashboard",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { }) {
-                            Surface(
-                                shape = RoundedCornerShape(50),
-                                color = Color(0xFFF1F5F9)
-                            ) {
+                Surface(
+                    shadowElevation = 1.dp,
+                    color = White
+                ) {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                "Dashboard",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = TextDark
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = TextDark)
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { }) {
                                 Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Profile",
-                                    tint = Color(0xFF64748B),
-                                    modifier = Modifier.padding(8.dp).size(24.dp)
+                                    imageVector = Icons.Outlined.Notifications,
+                                    contentDescription = "Notifications",
+                                    tint = TextMuted
                                 )
                             }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White
+                            Spacer(modifier = Modifier.width(4.dp))
+                            IconButton(onClick = { }) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = LightGrayBg,
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Person,
+                                            contentDescription = "Profile",
+                                            tint = TextMuted,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = White
+                        ),
+                        modifier = Modifier.height(64.dp)
                     )
-                )
+                }
             },
-            containerColor = BackgroundDark
+            containerColor = LightGrayBg
         ) { paddingValues ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .background(LightGrayBg) ,// 24px padding as requested
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 item {
                     SummaryCardsGrid()
@@ -100,44 +123,123 @@ fun SidebarContent() {
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .padding(16.dp)
+            .background(DarkNavy)
     ) {
+        // Logo Section
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
+            modifier = Modifier.padding(24.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Storefront,
                 contentDescription = "Logo",
                 tint = PrimaryGreen,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 "DukaTrack",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                ),
+                color = White
             )
         }
 
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            thickness = 0.5.dp,
+            color = White.copy(alpha = 0.1f)
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        SidebarItem("Dashboard", Icons.Default.Dashboard, isSelected = true)
-        SidebarItem("Products", Icons.Default.Inventory2)
-        SidebarItem("New Sale", Icons.Default.ShoppingCart)
-        SidebarItem("Sales History", Icons.Default.Assignment)
-        SidebarItem("Stock", Icons.Default.Inventory)
-        SidebarItem("Suppliers", Icons.Default.People)
-        SidebarItem("Reports", Icons.Default.BarChart)
-        SidebarItem("Settings", Icons.Default.Settings)
+        // Nav Items
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 12.dp)
+                .weight(1f)
+        ) {
+            // Inside SidebarContent()
+            SidebarItem("Dashboard", Icons.Outlined.GridView, isSelected = true) // GridView looks more like a dashboard
+            SidebarItem("Products", Icons.Outlined.Inventory2)
+            SidebarItem("New Sale", Icons.Outlined.AddShoppingCart) // More action-oriented
+            SidebarItem("Sales History", Icons.Outlined.History)
+            SidebarItem("Stock", Icons.Outlined.Layers)
+            SidebarItem("Suppliers", Icons.Outlined.LocalShipping)
+            SidebarItem("Reports", Icons.Outlined.Assessment)
+            SidebarItem("Settings", Icons.Outlined.Settings)
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(thickness = 0.5.dp, color = White.copy(alpha = 0.1f))
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            SidebarItem(
+                label = "Logout", 
+                icon = Icons.AutoMirrored.Filled.Logout, 
+                textColor = RedColor, 
+                iconColor = RedColor
+            )
+        }
+
+        // Bottom section
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+        ) {
+            // Free Plan Badge
+            Surface(
+                color = PrimaryGreen.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text(
+                    "FREE PLAN",
+                    color = PrimaryGreen,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // User Info
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = White.copy(alpha = 0.2f),
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            "WK", 
+                            color = White, 
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    "Wanjiku Kamau",
+                    color = White,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun SidebarItem(label: String, icon: ImageVector, isSelected: Boolean = false) {
+fun SidebarItem(
+    label: String,
+    icon: ImageVector,
+    isSelected: Boolean = false,
+    textColor: Color = White.copy(alpha = 0.7f),
+    iconColor: Color = White.copy(alpha = 0.7f)
+) {
     Surface(
-        color = if (isSelected) SidebarSelected else Color.Transparent,
+        color = if (isSelected) PrimaryGreen else Color.Transparent,
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -150,14 +252,14 @@ fun SidebarItem(label: String, icon: ImageVector, isSelected: Boolean = false) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) PrimaryGreen else TextGray,
+                tint = if (isSelected) White else iconColor,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = label,
-                color = if (isSelected) PrimaryGreen else TextGray,
-                fontSize = 15.sp,
+                color = if (isSelected) White else textColor,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
             )
         }
@@ -166,42 +268,42 @@ fun SidebarItem(label: String, icon: ImageVector, isSelected: Boolean = false) {
 
 @Composable
 fun SummaryCardsGrid() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Products",
                 value = "248",
-                icon = Icons.Default.Inventory2,
-                iconColor = Color(0xFFB45309),
-                iconBg = Color(0xFFFEF3C7)
+                icon = Icons.Default.Inventory,
+                iconColor =  Color(0xFF0EA5E9),
+                iconBg = Color(0xFFE0F2FE)
             )
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Low Stock",
                 value = "5",
-                icon = Icons.Default.Warning,
-                iconColor = WarningRed,
+                icon = Icons.Default.ErrorOutline,
+                iconColor = Color(0xFFEF4444),
                 iconBg = Color(0xFFFEE2E2),
-                valueColor = WarningRed
+                valueColor = RedColor
             )
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Today",
                 value = "KSh 4,200",
-                icon = Icons.Default.Paid,
-                iconColor = Color(0xFFCA8A04),
-                iconBg = Color(0xFFFEF9C3)
+                icon = Icons.Default.AccountBalanceWallet,
+                iconColor = Color(0xFF10B981),
+                iconBg = Color(0xFFD1FAE5)
             )
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "This Month",
                 value = "KSh 31k",
-                icon = Icons.Default.TrendingUp,
-                iconColor = Color(0xFF2563EB),
-                iconBg = Color(0xFFDBEAFE)
+                icon = Icons.Default.AutoGraph,
+                iconColor = Color(0xFF8B5CF6),
+                iconBg = Color(0xFFEDE9FE)
             )
         }
     }
@@ -215,12 +317,13 @@ fun SummaryCard(
     icon: ImageVector,
     iconColor: Color,
     iconBg: Color,
-    valueColor: Color = Color.Black
+    valueColor: Color = TextDark
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, BorderGray),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -241,15 +344,13 @@ fun SummaryCard(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = value,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
                 color = valueColor
             )
             Text(
                 text = title,
-                fontSize = 13.sp,
-                color = TextGray,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted
             )
         }
     }
@@ -259,8 +360,9 @@ fun SummaryCard(
 fun SalesChartCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, BorderGray),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -271,19 +373,18 @@ fun SalesChartCard() {
             ) {
                 Text(
                     "Sales Last 7 Days",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Color(0xFF1E293B)
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold, fontSize = 18.sp),
+                    color = TextDark
                 )
                 Surface(
-                    color = Color(0xFFF8FAFC),
+                    color = LightGrayBg,
                     shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    border = BorderStroke(1.dp, BorderGray)
                 ) {
                     Text(
                         "Weekly \u25BE",
-                        fontSize = 12.sp,
-                        color = TextGray,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextMuted,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -297,7 +398,8 @@ fun SalesChartCard() {
             ) {
                 Text(
                     "Chart visualization will go here",
-                    color = Color.LightGray
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = TextMuted
                 )
             }
         }

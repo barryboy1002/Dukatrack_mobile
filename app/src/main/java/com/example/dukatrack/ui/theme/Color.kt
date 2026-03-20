@@ -2,17 +2,20 @@ package com.example.dukatrack.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val PrimaryGreen = Color(0xFF16A34A)
+val DarkNavy = Color(0xFF0F172A)
+val LightGrayBg = Color(0xFFF8FAFC)
+val BorderGray = Color(0xFFE2E8F0)
+val TextDark = Color(0xFF0F172A)
+val TextMuted = Color(0xFF64748B)
+val RedColor = Color(0xFFDC2626)
+val WarningOrange = Color(0xFFF59E0B)
+val White = Color(0xFFFFFFFF)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-
-val BackgroundDark = Color(0xFF0F172A)
-val CardBackground = Color(0xFFFFFFFF)
-val PrimaryGreen = Color(0xFF10B981)
-val WarningRed = Color(0xFFEF4444)
-val TextGray = Color(0xFF64748B)
+// Legacy mappings for backward compatibility
+val BackgroundDark = DarkNavy
+val CardBackground = White
+val WarningRed = RedColor
+val ErrorRed = RedColor
+val TextGray = TextMuted
 val SidebarSelected = Color(0xFFF0FDF4)
