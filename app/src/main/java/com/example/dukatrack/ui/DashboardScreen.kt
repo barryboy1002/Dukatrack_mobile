@@ -395,17 +395,18 @@ fun SalesChartCard() {
                     Text(text = selectedperiod,
                         style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
-                }
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false },
-                    modifier = Modifier.width(mTextFieldSize.width.dp)
-                ) {mperiods.forEach{label ->
-                    DropdownMenuItem(
-                        text = { Text(text = label) },
-                        onClick = { selectedperiod = label
-                            showMenu = false }
-                    ) }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                        modifier = Modifier.width(mTextFieldSize.width.dp)
+                    ) {mperiods.forEach{label ->
+                        DropdownMenuItem(
+                            text = { Text(text = label) },
+                            onClick = { selectedperiod = label
+                                showMenu = false }
+                        ) }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
