@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import androidx.compose.foundation.Canvas
 import com.example.dukatrack.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -413,16 +416,89 @@ fun SalesChartCard() {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp),
-                contentAlignment = Alignment.Center
+                    .height(200.dp)
             ) {
-                Text(
-                    "Chart visualization will go here",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = TextMuted
+                val chartData = mapOf(
+                    "Mon" to 3500f,
+                    "Tue" to 4200f,
+                    "Wed" to 3800f,
+                    "Thu" to 5100f,
+                    "Fri" to 4800f,
+                    "Sat" to 6200f,
+                    "Sun" to 5800f
+                )
+                WeeklyAreachart(
+                    data = chartData,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // X-Axis Labels
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { day ->
+                    Text(
+                        day,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun WeeklyAreachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
+    val values = data.values.toList()
+    val graphColor = PrimaryGreen
+    val transparentGraphColor = PrimaryGreen.copy(alpha = 0.2f)
+
+    Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+        val spacePerDay = if (data.size > 1) width / (data.size - 1) else 0f
+
+        val maxData = values.maxOrNull() ?: 0f
+        val minData = values.minOrNull() ?: 0f
+        val range = maxData - minData
+        val heightFactor = height / (if (range == 0f) 1f else range)
+        
+        val path = Path().apply {
+            values.forEachIndexed { index, value ->
+                val x = index * spacePerDay
+                val y = height - (value - minData) * heightFactor
+                if (index == 0) moveTo(x, y) else lineTo(x, y)
+            }
+        }
+        //the gradient fill
+        val fillpath = Path().apply{
+            addPath(path)
+            lineTo((data.size - 1)*spacePerDay, height)
+            lineTo(0f, height)
+            close()
+        }
+
+        
+        drawPath(
+            path = fillpath,
+            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                colors = listOf(transparentGraphColor, Color.Transparent),
+                startY = 0f,
+                endY = height
+            )
+
+        )
+        drawPath(
+            path = path,
+            color = graphColor,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
+        )
+
     }
 }
 
