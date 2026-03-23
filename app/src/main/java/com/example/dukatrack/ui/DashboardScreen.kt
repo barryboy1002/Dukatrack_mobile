@@ -514,7 +514,7 @@ fun SalesChartCard() {
                     .height(200.dp)
             ) {
 
-                Areachart(
+                ProductsChart(
                     data = chartData,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -636,6 +636,31 @@ fun ChartTab(label:String,
                     modifier = Modifier.size(12.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier){
+    val values = data.values.toList()
+    val totalvalues  = values.sum()
+    val colors = listOf<Color>(Color(0xFF00FF00), Color(0xFF0000FF), Color(0xFFFF0000),Color(0xFF228B22),Color(0xFF8B0000),Color(0xFF008080),Color(0xFF0000FF)
+    )
+
+    Canvas(modifier = modifier){
+        val width = size.width
+        val height = size.height
+        var startangle = 0f
+        for(i in values.indices){
+            var angle =  (360 * values[i]/totalvalues).toFloat()
+            startangle += angle
+            drawArc(
+                color = colors[i],
+                startAngle = startangle,
+                sweepAngle = angle,
+                useCenter = true,
+            )
+
         }
     }
 }
