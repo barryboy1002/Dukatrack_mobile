@@ -1,17 +1,61 @@
 package com.example.dukatrack.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AutoGraph
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.outlined.AddShoppingCart
+import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.Layers
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,11 +63,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -31,9 +75,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.Offset
-import com.example.dukatrack.ui.theme.*
+import com.example.dukatrack.ui.theme.BorderGray
+import com.example.dukatrack.ui.theme.DarkNavy
+import com.example.dukatrack.ui.theme.DukatrackTheme
+import com.example.dukatrack.ui.theme.LightGrayBg
+import com.example.dukatrack.ui.theme.PrimaryGreen
+import com.example.dukatrack.ui.theme.RedColor
+import com.example.dukatrack.ui.theme.TextDark
+import com.example.dukatrack.ui.theme.TextMuted
+import com.example.dukatrack.ui.theme.White
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -370,11 +420,15 @@ fun SummaryCard(
 
 @Composable
 fun SalesChartCard() {
+    var selectedTab by remember { mutableStateOf("Sales") }
     var showMenu by remember { mutableStateOf(false) }
     val mperiods = listOf("Weekly", "Monthly", "Yearly")
     var selectedperiod by remember { mutableStateOf("Weekly") }
     var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
-    val chartData = mapOf(
+    // --Fake data we will generate the data with storage
+    val chartData = remember(selectedperiod){
+        when(selectedperiod){
+            "Weekly" -> mapOf(
         "Mon" to 3500f,
         "Tue" to 4200f,
         "Wed" to 3800f,
@@ -382,7 +436,24 @@ fun SalesChartCard() {
         "Fri" to 4800f,
         "Sat" to 6200f,
         "Sun" to 5800f
-    )
+            )
+            "Monthly" -> mapOf(
+                "Week 1" to 12000f, "Week 2" to 15500f,
+                "Week 3" to 9000f, "Week 4" to 18200f
+            )
+            "Yearly" -> mapOf(
+                "Jan" to 45000f,
+                "Mar" to 52000f,
+                "May" to 48000f,
+                "Jul" to 61000f,
+                "Sep" to 55000f,
+                "Nov" to 72000f
+            )
+
+            else -> emptyMap()
+        }
+    }
+   //fix this crap
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -396,11 +467,25 @@ fun SalesChartCard() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Sales Last 7 Days",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold, fontSize = 18.sp),
-                    color = TextDark
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ChartTab(
+                        label = "Sales",
+                        isSelected = selectedTab == "Sales",
+                        onClick = { selectedTab = "Sales" }
+                    )
+                    ChartTab(
+                        label = "Products",
+                        isSelected = selectedTab == "Products",
+                        onClick = { selectedTab = "Products" }
+                    )
+                    ChartTab(
+                        label = "Branch Sales",
+                        isSelected = false,
+                        isLocked = true, // Shows the lock icon
+                        onClick = { }
+                    )
+                }
+
                 Surface(modifier = Modifier.clickable { showMenu = true }.
                     onGloballyPositioned { coordinates -> mTextFieldSize = coordinates.size.toSize() },
                     shape = RoundedCornerShape(16.dp),
@@ -517,6 +602,41 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
             )
         }
 
+    }
+}
+
+@Composable
+fun ChartTab(label:String,
+             isSelected :Boolean,
+             isLocked: Boolean=false,
+             onClick: ()->Unit
+             ){
+    Surface(
+        modifier = Modifier.clickable(enabled =  !isLocked){onClick()},
+        shape = RoundedCornerShape(8.dp),
+        color = if (isSelected) PrimaryGreen.copy(alpha = 0.1f) else Color.Transparent,
+    ){
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                ),
+                color = if (isSelected) PrimaryGreen else TextMuted
+            )
+            if (isLocked) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = TextMuted,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
+        }
     }
 }
 
