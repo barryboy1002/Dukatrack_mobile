@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
 import com.example.dukatrack.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -373,6 +374,15 @@ fun SalesChartCard() {
     val mperiods = listOf("Weekly", "Monthly", "Yearly")
     var selectedperiod by remember { mutableStateOf("Weekly") }
     var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
+    val chartData = mapOf(
+        "Mon" to 3500f,
+        "Tue" to 4200f,
+        "Wed" to 3800f,
+        "Thu" to 5100f,
+        "Fri" to 4800f,
+        "Sat" to 6200f,
+        "Sun" to 5800f
+    )
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -418,16 +428,8 @@ fun SalesChartCard() {
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-                val chartData = mapOf(
-                    "Mon" to 3500f,
-                    "Tue" to 4200f,
-                    "Wed" to 3800f,
-                    "Thu" to 5100f,
-                    "Fri" to 4800f,
-                    "Sat" to 6200f,
-                    "Sun" to 5800f
-                )
-                WeeklyAreachart(
+
+                Areachart(
                     data = chartData,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -440,7 +442,7 @@ fun SalesChartCard() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { day ->
+                chartData.keys.forEach { day ->
                     Text(
                         day,
                         style = MaterialTheme.typography.labelSmall,
@@ -453,7 +455,7 @@ fun SalesChartCard() {
 }
 
 @Composable
-fun WeeklyAreachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
+fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
     val values = data.values.toList()
     val graphColor = PrimaryGreen
     val transparentGraphColor = PrimaryGreen.copy(alpha = 0.2f)
@@ -498,6 +500,22 @@ fun WeeklyAreachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
             color = graphColor,
             style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
         )
+
+        //draw the points and use them for reference to price later
+        for(i in values.indices){
+            val x = i * spacePerDay
+            val y = height - (values[i] - minData) * heightFactor
+            drawCircle(
+                color = graphColor,
+                radius = 4.dp.toPx(),
+                center = Offset(x, y)
+            )
+            drawCircle(
+                color = White,
+                radius = 2.dp.toPx(),
+                center = Offset(x, y)
+            )
+        }
 
     }
 }
