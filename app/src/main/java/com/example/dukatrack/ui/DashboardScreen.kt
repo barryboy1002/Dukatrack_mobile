@@ -654,7 +654,7 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
         drawPath(
             path = path,
             color = graphColor,
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
+            style = Stroke(width = 3.dp.toPx())
         )
 
         //draw the points and use them for reference to price later
