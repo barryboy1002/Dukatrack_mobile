@@ -64,10 +64,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -84,6 +87,7 @@ import com.example.dukatrack.ui.theme.RedColor
 import com.example.dukatrack.ui.theme.TextDark
 import com.example.dukatrack.ui.theme.TextMuted
 import com.example.dukatrack.ui.theme.White
+import com.example.dukatrack.ui.theme.pchartcolors
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -453,7 +457,10 @@ fun SalesChartCard() {
             else -> emptyMap()
         }
     }
+    val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
    //fix this crap
+    val TopProductData = productData.toList().sortedByDescending{(_, value) -> value}.take(3)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -480,14 +487,17 @@ fun SalesChartCard() {
                     )
                     ChartTab(
                         label = "Branch Sales",
-                        isSelected = false,
+                        isSelected = selectedTab == "Branch",
                         isLocked = true, // Shows the lock icon
-                        onClick = { }
+                        onClick = { selectedTab = "Branch" }
                     )
                 }
 
-                Surface(modifier = Modifier.clickable { showMenu = true }.
-                    onGloballyPositioned { coordinates -> mTextFieldSize = coordinates.size.toSize() },
+                Surface(modifier = Modifier
+                    .clickable { showMenu = true }
+                    .onGloballyPositioned { coordinates ->
+                        mTextFieldSize = coordinates.size.toSize()
+                    },
                     shape = RoundedCornerShape(16.dp),
                     color = PrimaryGreen) {
                     Text(text = selectedperiod,
@@ -513,26 +523,56 @@ fun SalesChartCard() {
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-
-                ProductsChart(
-                    data = chartData,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if(selectedTab == "Sales"){
+                    Areachart(data = chartData, modifier = Modifier.fillMaxSize())
+                }else if(selectedTab == "Products") {
+                    ProductsChart(data = productData, modifier = Modifier.fillMaxSize())
+                }else{
+                    Text("Upgrade")
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // X-Axis Labels
+            // X Labels
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                chartData.keys.forEach { day ->
-                    Text(
-                        day,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted
-                    )
+                ){
+                if (selectedTab == "Sales"){
+                    chartData.keys.forEach { day ->
+                        Text(
+                            day,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMuted
+                        )
+                    }
+                }else if(selectedTab == "Products"){
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        horizontalArrangement = Arrangement.Center, // Center the legend
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        TopProductData.forEachIndexed{Index,product ->
+                            Row(
+                                modifier = Modifier,
+                                horizontalArrangement = Arrangement.spacedBy(1.dp)
+                            ){
+                            Box(modifier = Modifier.size(8.dp)
+                                .clip(CircleShape)
+                                .background(pchartcolors[Index % pchartcolors.size])
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                product.first,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMuted
+                            )
+
+
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -612,7 +652,7 @@ fun ChartTab(label:String,
              onClick: ()->Unit
              ){
     Surface(
-        modifier = Modifier.clickable(enabled =  !isLocked){onClick()},
+        modifier = Modifier.clickable(onClick=onClick),
         shape = RoundedCornerShape(8.dp),
         color = if (isSelected) PrimaryGreen.copy(alpha = 0.1f) else Color.Transparent,
     ){
@@ -644,24 +684,29 @@ fun ChartTab(label:String,
 fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier){
     val values = data.values.toList()
     val totalvalues  = values.sum()
-    val colors = listOf<Color>(Color(0xFF00FF00), Color(0xFF0000FF), Color(0xFFFF0000),Color(0xFF228B22),Color(0xFF8B0000),Color(0xFF008080),Color(0xFF0000FF)
-    )
+
 
     Canvas(modifier = modifier){
-        val width = size.width
-        val height = size.height
-        var startangle = 0f
-        for(i in values.indices){
-            var angle =  (360 * values[i]/totalvalues).toFloat()
-            startangle += angle
-            drawArc(
-                color = colors[i],
-                startAngle = startangle,
-                sweepAngle = angle,
-                useCenter = true,
-            )
+        val canvasSize = size.minDimension
+        var currentStartAngle = -90f //Start from the top(12 o 'clock)
 
+        values.forEachIndexed { index, value ->
+            val sweepAngle = (value/totalvalues)*360f
+            drawArc(
+                color = pchartcolors[index % pchartcolors.size],
+                startAngle = currentStartAngle,
+                sweepAngle = sweepAngle,
+                useCenter = false,
+                style = Stroke(width = 40.dp.toPx(), cap = StrokeCap.Butt),
+                size = Size(canvasSize, canvasSize),
+                topLeft = Offset(
+                    (size.width - canvasSize) / 2f,
+                    (size.height - canvasSize) / 2f
+                )
+            )
+            currentStartAngle += sweepAngle
         }
+
     }
 }
 

@@ -19,3 +19,11 @@ val WarningRed = RedColor
 val ErrorRed = RedColor
 val TextGray = TextMuted
 val SidebarSelected = Color(0xFFF0FDF4)
+val pchartcolors = listOf(
+    Color(0xFF0EA5E9), // Blue
+    Color(0xFF10B981), // Green
+    Color(0xFFF59E0B), // Orange
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFFEF4444), // Red
+    Color(0xFFEC4899)  // Pink
+)
