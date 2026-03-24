@@ -127,7 +127,11 @@ fun DashboardScreen() {
                         },
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = TextDark)
+                                Icon(
+                                    Icons.Default.Menu,
+                                    contentDescription = "Menu",
+                                    tint = TextDark
+                                )
                             }
                         },
                         actions = {
@@ -170,7 +174,7 @@ fun DashboardScreen() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(LightGrayBg) ,// 24px padding as requested
+                    .background(LightGrayBg),// 24px padding as requested
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 item {
@@ -228,7 +232,11 @@ fun SidebarContent() {
                 .weight(1f)
         ) {
             // Inside SidebarContent()
-            SidebarItem("Dashboard", Icons.Outlined.GridView, isSelected = true) // GridView looks more like a dashboard
+            SidebarItem(
+                "Dashboard",
+                Icons.Outlined.GridView,
+                isSelected = true
+            ) // GridView looks more like a dashboard
             SidebarItem("Products", Icons.Outlined.Inventory2)
             SidebarItem("New Sale", Icons.Outlined.AddShoppingCart) // More action-oriented
             SidebarItem("Sales History", Icons.Outlined.History)
@@ -240,11 +248,11 @@ fun SidebarContent() {
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider(thickness = 0.5.dp, color = White.copy(alpha = 0.1f))
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             SidebarItem(
-                label = "Logout", 
-                icon = Icons.AutoMirrored.Filled.Logout, 
-                textColor = RedColor, 
+                label = "Logout",
+                icon = Icons.AutoMirrored.Filled.Logout,
+                textColor = RedColor,
                 iconColor = RedColor
             )
         }
@@ -278,8 +286,8 @@ fun SidebarContent() {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            "WK", 
-                            color = White, 
+                            "WK",
+                            color = White,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -335,13 +343,16 @@ fun SidebarItem(
 @Composable
 fun SummaryCardsGrid() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Products",
                 value = "248",
                 icon = Icons.Default.Inventory,
-                iconColor =  Color(0xFF0EA5E9),
+                iconColor = Color(0xFF0EA5E9),
                 iconBg = Color(0xFFE0F2FE)
             )
             SummaryCard(
@@ -354,7 +365,10 @@ fun SummaryCardsGrid() {
                 valueColor = RedColor
             )
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Today",
@@ -410,7 +424,10 @@ fun SummaryCard(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp
+                ),
                 color = valueColor
             )
             Text(
@@ -428,23 +445,25 @@ fun SalesChartCard() {
     var showMenu by remember { mutableStateOf(false) }
     val mperiods = listOf("Weekly", "Monthly", "Yearly")
     var selectedperiod by remember { mutableStateOf("Weekly") }
-    var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
+    var mTextFieldSize by remember { mutableStateOf(Size.Zero) }
     // --Fake data we will generate the data with storage
-    val chartData = remember(selectedperiod){
-        when(selectedperiod){
+    val chartData = remember(selectedperiod) {
+        when (selectedperiod) {
             "Weekly" -> mapOf(
-        "Mon" to 3500f,
-        "Tue" to 4200f,
-        "Wed" to 3800f,
-        "Thu" to 5100f,
-        "Fri" to 4800f,
-        "Sat" to 6200f,
-        "Sun" to 5800f
+                "Mon" to 3500f,
+                "Tue" to 4200f,
+                "Wed" to 3800f,
+                "Thu" to 5100f,
+                "Fri" to 4800f,
+                "Sat" to 6200f,
+                "Sun" to 5800f
             )
+
             "Monthly" -> mapOf(
                 "Week 1" to 12000f, "Week 2" to 15500f,
                 "Week 3" to 9000f, "Week 4" to 18200f
             )
+
             "Yearly" -> mapOf(
                 "Jan" to 45000f,
                 "Mar" to 52000f,
@@ -458,8 +477,8 @@ fun SalesChartCard() {
         }
     }
     val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
-   //fix this crap
-    val TopProductData = productData.toList().sortedByDescending{(_, value) -> value}.take(3)
+    //fix this crap
+    val TopProductData = productData.toList().sortedByDescending { (_, value) -> value }.take(3)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -493,27 +512,35 @@ fun SalesChartCard() {
                     )
                 }
 
-                Surface(modifier = Modifier
-                    .clickable { showMenu = true }
-                    .onGloballyPositioned { coordinates ->
-                        mTextFieldSize = coordinates.size.toSize()
-                    },
+                Surface(
+                    modifier = Modifier
+                        .clickable { showMenu = true }
+                        .onGloballyPositioned { coordinates ->
+                            mTextFieldSize = coordinates.size.toSize()
+                        },
                     shape = RoundedCornerShape(16.dp),
-                    color = PrimaryGreen) {
-                    Text(text = selectedperiod,
+                    color = PrimaryGreen
+                ) {
+                    Text(
+                        text = selectedperiod,
                         style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    )
 
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false },
                         modifier = Modifier.width(mTextFieldSize.width.dp)
-                    ) {mperiods.forEach{label ->
-                        DropdownMenuItem(
-                            text = { Text(text = label) },
-                            onClick = { selectedperiod = label
-                                showMenu = false }
-                        ) }
+                    ) {
+                        mperiods.forEach { label ->
+                            DropdownMenuItem(
+                                text = { Text(text = label) },
+                                onClick = {
+                                    selectedperiod = label
+                                    showMenu = false
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -523,23 +550,23 @@ fun SalesChartCard() {
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-                if(selectedTab == "Sales"){
+                if (selectedTab == "Sales") {
                     Areachart(data = chartData, modifier = Modifier.fillMaxSize())
-                }else if(selectedTab == "Products") {
+                } else if (selectedTab == "Products") {
                     ProductsChart(data = productData, modifier = Modifier.fillMaxSize())
-                }else{
+                } else {
                     Text("Upgrade")
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // X Labels
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
-                ){
-                if (selectedTab == "Sales"){
+            ) {
+                if (selectedTab == "Sales") {
                     chartData.keys.forEach { day ->
                         Text(
                             day,
@@ -547,27 +574,31 @@ fun SalesChartCard() {
                             color = TextMuted
                         )
                     }
-                }else if(selectedTab == "Products"){
+                } else if (selectedTab == "Products") {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
                         horizontalArrangement = Arrangement.Center, // Center the legend
                         verticalAlignment = Alignment.CenterVertically
-                    ){
-                        TopProductData.forEachIndexed{Index,product ->
+                    ) {
+                        TopProductData.forEachIndexed { Index, product ->
                             Row(
                                 modifier = Modifier,
                                 horizontalArrangement = Arrangement.spacedBy(1.dp)
-                            ){
-                            Box(modifier = Modifier.size(8.dp)
-                                .clip(CircleShape)
-                                .background(pchartcolors[Index % pchartcolors.size])
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                product.first,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextMuted
-                            )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(pchartcolors[Index % pchartcolors.size])
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    product.first,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted
+                                )
 
 
                             }
@@ -594,7 +625,7 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
         val minData = values.minOrNull() ?: 0f
         val range = maxData - minData
         val heightFactor = height / (if (range == 0f) 1f else range)
-        
+
         val path = Path().apply {
             values.forEachIndexed { index, value ->
                 val x = index * spacePerDay
@@ -603,14 +634,14 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
             }
         }
         //the gradient fill
-        val fillpath = Path().apply{
+        val fillpath = Path().apply {
             addPath(path)
-            lineTo((data.size - 1)*spacePerDay, height)
+            lineTo((data.size - 1) * spacePerDay, height)
             lineTo(0f, height)
             close()
         }
 
-        
+
         drawPath(
             path = fillpath,
             brush = androidx.compose.ui.graphics.Brush.verticalGradient(
@@ -627,7 +658,7 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
         )
 
         //draw the points and use them for reference to price later
-        for(i in values.indices){
+        for (i in values.indices) {
             val x = i * spacePerDay
             val y = height - (values[i] - minData) * heightFactor
             drawCircle(
@@ -646,20 +677,21 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ChartTab(label:String,
-             isSelected :Boolean,
-             isLocked: Boolean=false,
-             onClick: ()->Unit
-             ){
+fun ChartTab(
+    label: String,
+    isSelected: Boolean,
+    isLocked: Boolean = false,
+    onClick: () -> Unit
+) {
     Surface(
-        modifier = Modifier.clickable(onClick=onClick),
+        modifier = Modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
         color = if (isSelected) PrimaryGreen.copy(alpha = 0.1f) else Color.Transparent,
-    ){
+    ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
-        ){
+        ) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge.copy(
@@ -681,17 +713,17 @@ fun ChartTab(label:String,
 }
 
 @Composable
-fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier){
+fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier) {
     val values = data.values.toList()
-    val totalvalues  = values.sum()
+    val totalvalues = values.sum()
 
 
-    Canvas(modifier = modifier){
+    Canvas(modifier = modifier) {
         val canvasSize = size.minDimension
         var currentStartAngle = -90f //Start from the top(12 o 'clock)
 
         values.forEachIndexed { index, value ->
-            val sweepAngle = (value/totalvalues)*360f
+            val sweepAngle = (value / totalvalues) * 360f
             drawArc(
                 color = pchartcolors[index % pchartcolors.size],
                 startAngle = currentStartAngle,
