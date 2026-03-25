@@ -183,6 +183,9 @@ fun DashboardScreen() {
                 item {
                     SalesChartCard()
                 }
+                item {
+                    TopProductsCard()
+                }
             }
         }
     }
@@ -739,6 +742,48 @@ fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier) {
             currentStartAngle += sweepAngle
         }
 
+    }
+}
+@Composable
+fun TopProductsCard(modifier: Modifier = Modifier){
+    //make sure to remove this line after implementing
+    val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
+    var index by remember {mutableStateOf(1)}
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = White),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, BorderGray),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ){
+        Column(modifier = Modifier.padding(20.dp)){
+            Text(text = "Top Products",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            productData.forEach {  (product, value) ->
+                Row(modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                    ){
+                    Text(text = " #$index",
+                        color = PrimaryGreen,
+                        fontSize = 16.sp
+                    )
+                    Column(modifier = Modifier.weight(2f)){
+                        Text(text = product,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Text(text = "$value%",
+                            color = PrimaryGreen
+                        )
+                    }
+                }
+                index++
+            }
+
+        }
     }
 }
 
