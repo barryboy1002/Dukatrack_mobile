@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AutoGraph
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Lock
@@ -748,7 +749,7 @@ fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier) {
 fun TopProductsCard(modifier: Modifier = Modifier){
     //make sure to remove this line after implementing
     val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
-    var index by remember {mutableStateOf(1)}
+    val productsList = productData.toList()
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -761,26 +762,44 @@ fun TopProductsCard(modifier: Modifier = Modifier){
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp)
             Spacer(modifier = Modifier.height(16.dp))
-            productData.forEach {  (product, value) ->
-                Row(modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+            productsList.forEachIndexed { index, (product, value) ->
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                     ){
-                    Text(text = " #$index",
+                    Text(text = " #${index+1}",
                         color = PrimaryGreen,
-                        fontSize = 16.sp
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.width(32.dp)
                     )
+                    Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(2f)){
                         Text(text = product,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextDark
                         )
                         Text(text = "$value%",
+                            style = MaterialTheme.typography.bodySmall,
                             color = PrimaryGreen
                         )
                     }
+                    Icon(
+                        imageVector = Icons.Filled.ChevronRight,
+                        contentDescription = null,
+                        tint = BorderGray,
+                        modifier = Modifier.size(20.dp)
+                    )
+
                 }
-                index++
+                if (index < productsList.size - 1) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        thickness = 1.dp,
+                        color = BorderGray.copy(alpha = 0.5f) // Slightly more visible than 0.1f
+                    )
+                }
+
             }
 
         }
