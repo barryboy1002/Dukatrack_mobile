@@ -4,65 +4,16 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.AutoGraph
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material.icons.outlined.AddShoppingCart
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.LocalShipping
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,114 +31,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.navigation.NavController
-import com.example.dukatrack.ui.theme.BorderGray
-import com.example.dukatrack.ui.theme.DarkNavy
-import com.example.dukatrack.ui.theme.DukatrackTheme
-import com.example.dukatrack.ui.theme.LightGrayBg
-import com.example.dukatrack.ui.theme.PrimaryGreen
-import com.example.dukatrack.ui.theme.RedColor
-import com.example.dukatrack.ui.theme.TextDark
-import com.example.dukatrack.ui.theme.TextMuted
-import com.example.dukatrack.ui.theme.White
-import com.example.dukatrack.ui.theme.pchartcolors
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.dukatrack.ui.theme.*
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(navController: NavController) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                modifier = Modifier.width(240.dp),
-                drawerContainerColor = DarkNavy,
-                drawerShape = RoundedCornerShape(0.dp)
-            ) {
-                SidebarContent(navController)
+    MainLayout(navController = navController, title = "Dashboard") { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(LightGrayBg),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            item {
+                SummaryCardsGrid()
             }
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                Surface(
-                    shadowElevation = 1.dp,
-                    color = White
-                ) {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                "Dashboard",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                color = TextDark
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    contentDescription = "Menu",
-                                    tint = TextDark
-                                )
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = { }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = "Notifications",
-                                    tint = TextMuted
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(onClick = { }) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = LightGrayBg,
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Default.Person,
-                                            contentDescription = "Profile",
-                                            tint = TextMuted,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = White
-                        ),
-                        modifier = Modifier.height(64.dp)
-                    )
-                }
-            },
-            containerColor = LightGrayBg
-        ) { paddingValues ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(LightGrayBg),// 24px padding as requested
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                item {
-                    SummaryCardsGrid()
-                }
-                item {
-                    SalesChartCard()
-                }
-                item {
-                    TopProductsCard()
-                }
+            item {
+                SalesChartCard()
+            }
+            item {
+                TopProductsCard()
             }
         }
     }
@@ -195,6 +60,9 @@ fun DashboardScreen(navController: NavController) {
 
 @Composable
 fun SidebarContent(navController: NavController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -236,17 +104,29 @@ fun SidebarContent(navController: NavController) {
                 .padding(horizontal = 12.dp)
                 .weight(1f)
         ) {
-            // Inside SidebarContent()
             SidebarItem(
-                "Dashboard",
-                Icons.Outlined.GridView,
-                isSelected = true
-            ) // GridView looks more like a dashboard
-            SidebarItem("Products", Icons.Outlined.Inventory2,onClick={
-                navController.navigate(screen_names.Products)
-
-            })
-            SidebarItem("New Sale", Icons.Outlined.AddShoppingCart) // More action-oriented
+                label = "Dashboard",
+                icon = Icons.Outlined.GridView,
+                isSelected = currentRoute == screen_names.Dashboard,
+                onClick = {
+                    if (currentRoute != screen_names.Dashboard) {
+                        navController.navigate(screen_names.Dashboard) {
+                            popUpTo(screen_names.Dashboard) { inclusive = true }
+                        }
+                    }
+                }
+            )
+            SidebarItem(
+                label = "Products",
+                icon = Icons.Outlined.Inventory2,
+                isSelected = currentRoute == screen_names.Products,
+                onClick = {
+                    if (currentRoute != screen_names.Products) {
+                        navController.navigate(screen_names.Products)
+                    }
+                }
+            )
+            SidebarItem("New Sale", Icons.Outlined.AddShoppingCart)
             SidebarItem("Sales History", Icons.Outlined.History)
             SidebarItem("Stock", Icons.Outlined.Layers)
             SidebarItem("Suppliers", Icons.Outlined.LocalShipping)
@@ -456,7 +336,7 @@ fun SalesChartCard() {
     val mperiods = listOf("Weekly", "Monthly", "Yearly")
     var selectedperiod by remember { mutableStateOf("Weekly") }
     var mTextFieldSize by remember { mutableStateOf(Size.Zero) }
-    // --Fake data we will generate the data with storage
+
     val chartData = remember(selectedperiod) {
         when (selectedperiod) {
             "Weekly" -> mapOf(
@@ -468,12 +348,10 @@ fun SalesChartCard() {
                 "Sat" to 6200f,
                 "Sun" to 5800f
             )
-
             "Monthly" -> mapOf(
                 "Week 1" to 12000f, "Week 2" to 15500f,
                 "Week 3" to 9000f, "Week 4" to 18200f
             )
-
             "Yearly" -> mapOf(
                 "Jan" to 45000f,
                 "Mar" to 52000f,
@@ -482,13 +360,11 @@ fun SalesChartCard() {
                 "Sep" to 55000f,
                 "Nov" to 72000f
             )
-
             else -> emptyMap()
         }
     }
     val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
-    //fix this crap
-    val TopProductData = productData.toList().sortedByDescending { (_, value) -> value }.take(3)
+    val topProductData = productData.toList().sortedByDescending { (_, value) -> value }.take(3)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -517,7 +393,7 @@ fun SalesChartCard() {
                     ChartTab(
                         label = "Branch Sales",
                         isSelected = selectedTab == "Branch",
-                        isLocked = true, // Shows the lock icon
+                        isLocked = true,
                         onClick = { selectedTab = "Branch" }
                     )
                 }
@@ -571,7 +447,6 @@ fun SalesChartCard() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // X Labels
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -589,10 +464,10 @@ fun SalesChartCard() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        horizontalArrangement = Arrangement.Center, // Center the legend
+                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TopProductData.forEachIndexed { Index, product ->
+                        topProductData.forEachIndexed { index, product ->
                             Row(
                                 modifier = Modifier,
                                 horizontalArrangement = Arrangement.spacedBy(1.dp)
@@ -601,7 +476,7 @@ fun SalesChartCard() {
                                     modifier = Modifier
                                         .size(8.dp)
                                         .clip(CircleShape)
-                                        .background(pchartcolors[Index % pchartcolors.size])
+                                        .background(pchartcolors[index % pchartcolors.size])
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
@@ -609,8 +484,6 @@ fun SalesChartCard() {
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextMuted
                                 )
-
-
                             }
                         }
                     }
@@ -643,14 +516,12 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
                 if (index == 0) moveTo(x, y) else lineTo(x, y)
             }
         }
-        //the gradient fill
         val fillpath = Path().apply {
             addPath(path)
             lineTo((data.size - 1) * spacePerDay, height)
             lineTo(0f, height)
             close()
         }
-
 
         drawPath(
             path = fillpath,
@@ -659,7 +530,6 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
                 startY = 0f,
                 endY = height
             )
-
         )
         drawPath(
             path = path,
@@ -667,7 +537,6 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
             style = Stroke(width = 3.dp.toPx())
         )
 
-        //draw the points and use them for reference to price later
         for (i in values.indices) {
             val x = i * spacePerDay
             val y = height - (values[i] - minData) * heightFactor
@@ -682,7 +551,6 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
                 center = Offset(x, y)
             )
         }
-
     }
 }
 
@@ -727,10 +595,9 @@ fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier) {
     val values = data.values.toList()
     val totalvalues = values.sum()
 
-
     Canvas(modifier = modifier) {
         val canvasSize = size.minDimension
-        var currentStartAngle = -90f //Start from the top(12 o 'clock)
+        var currentStartAngle = -90f
 
         values.forEachIndexed { index, value ->
             val sweepAngle = (value / totalvalues) * 360f
@@ -748,12 +615,11 @@ fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier) {
             )
             currentStartAngle += sweepAngle
         }
-
     }
 }
+
 @Composable
 fun TopProductsCard(modifier: Modifier = Modifier){
-    //make sure to remove this line after implementing
     val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
     val productsList = productData.toList()
     Card(
@@ -771,7 +637,7 @@ fun TopProductsCard(modifier: Modifier = Modifier){
             productsList.forEachIndexed { index, (product, value) ->
                 Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
-                    ){
+                ){
                     Text(text = " #${index+1}",
                         color = PrimaryGreen,
                         fontWeight = FontWeight.Bold,
@@ -796,19 +662,15 @@ fun TopProductsCard(modifier: Modifier = Modifier){
                         tint = BorderGray,
                         modifier = Modifier.size(20.dp)
                     )
-
                 }
                 if (index < productsList.size - 1) {
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 4.dp),
                         thickness = 1.dp,
-                        color = BorderGray.copy(alpha = 0.5f) // Slightly more visible than 0.1f
+                        color = BorderGray.copy(alpha = 0.5f)
                     )
                 }
-
             }
-
         }
     }
 }
-
