@@ -79,6 +79,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import androidx.navigation.NavController
 import com.example.dukatrack.ui.theme.BorderGray
 import com.example.dukatrack.ui.theme.DarkNavy
 import com.example.dukatrack.ui.theme.DukatrackTheme
@@ -93,7 +94,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(navController: NavController) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -105,7 +106,7 @@ fun DashboardScreen() {
                 drawerContainerColor = DarkNavy,
                 drawerShape = RoundedCornerShape(0.dp)
             ) {
-                SidebarContent()
+                SidebarContent(navController)
             }
         }
     ) {
@@ -193,7 +194,7 @@ fun DashboardScreen() {
 }
 
 @Composable
-fun SidebarContent() {
+fun SidebarContent(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -241,7 +242,10 @@ fun SidebarContent() {
                 Icons.Outlined.GridView,
                 isSelected = true
             ) // GridView looks more like a dashboard
-            SidebarItem("Products", Icons.Outlined.Inventory2)
+            SidebarItem("Products", Icons.Outlined.Inventory2,onClick={
+                navController.navigate(screen_names.Products)
+
+            })
             SidebarItem("New Sale", Icons.Outlined.AddShoppingCart) // More action-oriented
             SidebarItem("Sales History", Icons.Outlined.History)
             SidebarItem("Stock", Icons.Outlined.Layers)
@@ -314,7 +318,8 @@ fun SidebarItem(
     icon: ImageVector,
     isSelected: Boolean = false,
     textColor: Color = White.copy(alpha = 0.7f),
-    iconColor: Color = White.copy(alpha = 0.7f)
+    iconColor: Color = White.copy(alpha = 0.7f),
+    onClick: () -> Unit = {}
 ) {
     Surface(
         color = if (isSelected) PrimaryGreen else Color.Transparent,
@@ -322,6 +327,7 @@ fun SidebarItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp)
+            .clickable(onClick = onClick)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -806,10 +812,3 @@ fun TopProductsCard(modifier: Modifier = Modifier){
     }
 }
 
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-fun DashboardPreview() {
-    DukatrackTheme {
-        DashboardScreen()
-    }
-}
