@@ -42,7 +42,7 @@ fun DashboardScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(LightGrayBg),
+                .background(DarkNavy),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {

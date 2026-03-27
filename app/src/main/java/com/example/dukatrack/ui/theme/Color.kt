@@ -3,7 +3,7 @@ package com.example.dukatrack.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val PrimaryGreen = Color(0xFF16A34A)
-val DarkNavy = Color(0xFF0F172A)
+val DarkNavy = Color(0xFF111827)
 val LightGrayBg = Color(0xFFF8FAFC)
 val BorderGray = Color(0xFFE2E8F0)
 val TextDark = Color(0xFF0F172A)
