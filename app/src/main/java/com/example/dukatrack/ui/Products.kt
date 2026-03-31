@@ -1,22 +1,30 @@
 package com.example.dukatrack.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -33,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.dukatrack.ui.theme.DarkNavy
 
 
 @Composable
@@ -50,20 +59,64 @@ fun ProductsScreen(navController: NavController){
         }
     }
     MainLayout(navController = navController, title = "Products") { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)){
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .background(DarkNavy)
+        ){
             ProductSearchBar(
                 query = query,
                 onQueryChange = { query = it },
                 onSearch = { /* Handle search submission */ },
                 searchResults = filteredItems,
                 onResultClick = { query = it },
-                // Customize appearance with optional parameters
-                placeholder = { Text("Search desserts") },
+                placeholder = { Text("Search products...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 trailingIcon = { Icon(Icons.Default.MoreVert, contentDescription = "More options") },
                 supportingContent = { Text("Android dessert") },
                 leadingContent = { Icon(Icons.Filled.Star, contentDescription = "Starred item") }
             )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Surface(
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.clickable { /* Handle filter */ }
+                ){
+                    Text(
+                        text="Filter",
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.clickable { /* Handle sort */ }
+                ){
+                    Text(
+                        text="Sort",
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = { /* Handle more options click */ }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert, 
+                        contentDescription = "More options",
+                        tint = Color.White
+                    )
+                }
+
+            }
 
         }
     }
@@ -87,14 +140,19 @@ fun ProductSearchBar(
     ){
     var expanded by remember {mutableStateOf(false)}
     Box(
-        modifier
-            .fillMaxSize()
+        modifier = modifier
+            .fillMaxWidth() // Changed from fillMaxSize() to show content below
             .semantics{isTraversalGroup = true}
     ){
         SearchBar(modifier = Modifier
             .align(Alignment.TopCenter)
             .semantics{traversalIndex = 0f},
-            inputField = {
+            colors = SearchBarDefaults.colors(
+                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
+            shape = MaterialTheme.shapes.medium,
+            shadowElevation = 6.dp,
+                    inputField = {
                 SearchBarDefaults.InputField(
                     query = query,
                    onQueryChange = onQueryChange,
@@ -106,7 +164,11 @@ fun ProductSearchBar(
                     onExpandedChange = {expanded = it},
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
-                    trailingIcon = trailingIcon
+                    trailingIcon = trailingIcon,
+                    colors = SearchBarDefaults.inputFieldColors(
+                        focusedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
             },
             expanded = expanded,
@@ -119,7 +181,10 @@ fun ProductSearchBar(
                         headlineContent = {Text(resultText)},
                         supportingContent = supportingContent?.let{{it(resultText)}},
                         leadingContent = leadingContent,
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        colors = ListItemDefaults.colors(
+                            containerColor = Color.Transparent,
+                            headlineColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                        ),
                         modifier = Modifier
                             .clickable {
                                 onResultClick(resultText)
