@@ -15,14 +15,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
@@ -41,9 +39,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.dukatrack.ui.theme.DarkNavy
+import com.example.dukatrack.ui.theme.PrimaryGreen
 
 
 @Composable
@@ -70,13 +70,9 @@ fun ProductsScreen(navController: NavController){
                 query = query,
                 onQueryChange = { query = it },
                 onSearch = { /* Handle search submission */ },
-                searchResults = filteredItems,
-                onResultClick = { query = it },
                 placeholder = { Text("Search products...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                trailingIcon = { Icon(Icons.Default.MoreVert, contentDescription = "More options") },
-                supportingContent = { Text("Android dessert") },
-                leadingContent = { Icon(Icons.Filled.Star, contentDescription = "Starred item") }
+                trailingIcon = { Icon(Icons.Default.MoreVert, contentDescription = "More options") }
             )
             Row(
                 modifier = Modifier
@@ -120,14 +116,9 @@ fun ProductsScreen(navController: NavController){
 
             }
             LazyColumn(
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    top = 72.dp, // Provides space for the search bar
-                    end = 16.dp,
-                    bottom = 16.dp
-                ),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.semantics {
+                modifier = Modifier.weight(1f).semantics {
                     traversalIndex = 1f
                 },
             ) {
@@ -147,57 +138,53 @@ fun ProductSearchBar(
     query : String,
     onQueryChange : (String) -> Unit,
     onSearch: (String) -> Unit,
-    searchResults: List<String>,
-    onResultClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder : @Composable () -> Unit = {Text("Search Products")},
     leadingIcon : @Composable (()-> Unit)? = {Icon(Icons.Default.Search, contentDescription = "Search bar")},
     trailingIcon: @Composable (() -> Unit)? = null,
-    supportingContent: (@Composable (String) -> Unit)? = null,
-    leadingContent: (@Composable () -> Unit)? = null,
     ){
-    var expanded by remember {mutableStateOf(false)}
     Box(
         modifier = modifier
-            .fillMaxWidth() // Changed from fillMaxSize() to show content below
+            .fillMaxWidth()
+            .padding(top = 8.dp)
             .semantics{isTraversalGroup = true}
     ){
-        SearchBar(modifier = Modifier
-            .align(Alignment.TopCenter)
-            .semantics{traversalIndex = 0f},
-            colors = SearchBarDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
-            shape = MaterialTheme.shapes.medium,
-            shadowElevation = 6.dp,
-                    inputField = {
+        SearchBar(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .semantics{traversalIndex = 0f}
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            inputField = {
                 SearchBarDefaults.InputField(
                     query = query,
-                   onQueryChange = onQueryChange,
-                   onSearch = {
-                       onSearch(query)
-                       expanded = false
-                   },
-                    expanded = expanded,
-                    onExpandedChange = {expanded = it},
+                    onQueryChange = onQueryChange,
+                    onSearch = {
+                        onSearch(query)
+                    },
+                    expanded = false,
+                    onExpandedChange = { },
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
-                    trailingIcon = trailingIcon,
+                    trailingIcon = {
+                        if (query.isNotEmpty()) {
+                            IconButton(onClick = { onQueryChange("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear search")
+                            }
+                        } else {
+                            trailingIcon?.invoke()
+                        }
+                    },
                     colors = SearchBarDefaults.inputFieldColors(
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
                         unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             },
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
+            expanded = false,
+            onExpandedChange = { },
         ) {
-            LazyColumn{
-                items(count = searchResults.size){index ->
-                    val resultText = searchResults[index]
-                    ProductListItem(resultText, "Active","ksh 150")
-                }
-            }
+            // Content is empty to avoid showing a separate suggestion list
         }
     }
 }
@@ -210,16 +197,27 @@ fun ProductListItem(
     itemPrice:String,
     modifier: Modifier = Modifier
 ){
-    Surface(modifier = Modifier.clickable{}.padding(horizontal = 16.dp, vertical = 8.dp),
+    Surface(modifier = Modifier.clickable{}.fillMaxWidth(),
         color = Color.White.copy(alpha = 1f),
         shape = RoundedCornerShape(8.dp)){
-        Row (){
-            Column(modifier = modifier.padding(8.dp)){
-                Text(text = itemName)
-                Text(text = itemPrice)
+        Row (modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically){
+            Column(modifier = modifier.weight(1f)){
+                Text(text = itemName,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge)
+                Text(text = itemPrice,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PrimaryGreen)
             }
-            Spacer(modifier = Modifier.weight(1f))
-            Text(text = itemDescription, modifier = Modifier.padding(8.dp))
+            Surface(
+                color = PrimaryGreen.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(4.dp)){
+                    Text(text = itemDescription,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = PrimaryGreen
+                    )
+            }
         }
     }
 }
