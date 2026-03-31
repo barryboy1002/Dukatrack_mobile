@@ -2,8 +2,10 @@ package com.example.dukatrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -117,6 +119,22 @@ fun ProductsScreen(navController: NavController){
                 }
 
             }
+            LazyColumn(
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = 72.dp, // Provides space for the search bar
+                    end = 16.dp,
+                    bottom = 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.semantics {
+                    traversalIndex = 1f
+                },
+            ) {
+                items(count = filteredItems.size) {
+                    ProductListItem(itemName = filteredItems[it],"Active","Ksh 150")
+                }
+            }
 
         }
     }
@@ -177,24 +195,31 @@ fun ProductSearchBar(
             LazyColumn{
                 items(count = searchResults.size){index ->
                     val resultText = searchResults[index]
-                    ListItem(
-                        headlineContent = {Text(resultText)},
-                        supportingContent = supportingContent?.let{{it(resultText)}},
-                        leadingContent = leadingContent,
-                        colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent,
-                            headlineColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier
-                            .clickable {
-                                onResultClick(resultText)
-                                expanded = false
-                            }
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
+                    ProductListItem(resultText, "Active","ksh 150")
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+fun ProductListItem(
+    itemName:String,
+    itemDescription:String,
+    itemPrice:String,
+    modifier: Modifier = Modifier
+){
+    Surface(modifier = Modifier.clickable{}.padding(horizontal = 16.dp, vertical = 8.dp),
+        color = Color.White.copy(alpha = 1f),
+        shape = RoundedCornerShape(8.dp)){
+        Row (){
+            Column(modifier = modifier.padding(8.dp)){
+                Text(text = itemName)
+                Text(text = itemPrice)
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Text(text = itemDescription, modifier = Modifier.padding(8.dp))
         }
     }
 }
