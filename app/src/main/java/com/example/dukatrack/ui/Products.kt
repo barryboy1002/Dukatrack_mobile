@@ -148,7 +148,7 @@ fun ProductSearchBar(
             .align(Alignment.TopCenter)
             .semantics{traversalIndex = 0f},
             colors = SearchBarDefaults.colors(
-                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ),
             shape = MaterialTheme.shapes.medium,
             shadowElevation = 6.dp,
@@ -166,8 +166,8 @@ fun ProductSearchBar(
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
                     colors = SearchBarDefaults.inputFieldColors(
-                        focusedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             },
@@ -183,7 +183,7 @@ fun ProductSearchBar(
                         leadingContent = leadingContent,
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
-                            headlineColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                            headlineColor = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier
                             .clickable {
