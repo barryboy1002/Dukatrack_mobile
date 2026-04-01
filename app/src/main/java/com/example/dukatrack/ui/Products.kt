@@ -23,8 +23,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +70,9 @@ fun ProductsScreen(navController: NavController){
     var query  by rememberSaveable { mutableStateOf("")}
     var showEditSheet by remember { mutableStateOf(false) }
     var selectedProductName by remember { mutableStateOf("") }
+    var showAddDrop by remember{mutableStateOf(false)}
+    var showCategory by remember{mutableStateOf(false)}
+    var showSort by remember{mutableStateOf(false)}
     
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -108,7 +111,7 @@ fun ProductsScreen(navController: NavController){
                 Surface(
                     color = Color.White.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.clickable { /* Handle filter */ }
+                    modifier = Modifier.clickable { showCategory  = true }
                 ){
                     Text(
                         text="Filter",
@@ -116,12 +119,21 @@ fun ProductsScreen(navController: NavController){
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    DropdownMenu(
+                            expanded = showCategory,
+                            onDismissRequest = { showCategory = false }
+                    ) {
+                        //figure out loop for categories
+                        DropdownMenuItem(text = { Text("All categories") }, onClick = { /* Handle add click */ })
+                        DropdownMenuItem(text = { Text("Flour") }, onClick = { /* Handle edit click */ })
+                    }
+
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Surface(
                     color = Color.White.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.clickable { /* Handle sort */ }
+                    modifier = Modifier.clickable { showSort = true }
                 ){
                     Text(
                         text="Sort",
@@ -129,14 +141,29 @@ fun ProductsScreen(navController: NavController){
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    DropdownMenu(
+                        expanded = showSort,
+                        onDismissRequest = { showSort = false }
+                    ) {
+                        //figure out loop for categories
+                        DropdownMenuItem(text = { Text("Ascending") }, onClick = { /* Handle add click */ })
+                        DropdownMenuItem(text = { Text("Descending") }, onClick = { /* Handle edit click */ })
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { /* Handle more options click */ }) {
+                IconButton(onClick = { showAddDrop = true}) {
                     Icon(
                         imageVector = Icons.Default.MoreVert, 
                         contentDescription = "More options",
                         tint = Color.White
                     )
+                    DropdownMenu(
+                        expanded = showAddDrop,
+                        onDismissRequest = { showAddDrop = false }
+                    ) {
+                        DropdownMenuItem(text = { Text("Add Product") }, onClick = { /* Handle add click */ })
+                        DropdownMenuItem(text = { Text("Add New Category") }, onClick = { /* Handle edit click */ })
+                    }
                 }
 
             }
@@ -319,15 +346,19 @@ fun ProductSearchBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 8.dp)
-            .semantics{isTraversalGroup = true}
+            .padding(horizontal = 16.dp,vertical = 8.dp)
+            .semantics{isTraversalGroup = true},
     ){
+        val containerColor = Color.White.copy(alpha = 0.15f)
         SearchBar(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .semantics{traversalIndex = 0f}
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            colors = SearchBarDefaults.colors(
+                containerColor = containerColor,
+            ),
             inputField = {
                 SearchBarDefaults.InputField(
                     query = query,
@@ -349,11 +380,19 @@ fun ProductSearchBar(
                         }
                     },
                     colors = SearchBarDefaults.inputFieldColors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedPlaceholderColor = Color.LightGray,
+                        unfocusedPlaceholderColor = Color.LightGray,
+                        focusedLeadingIconColor = Color.White,
+                        unfocusedLeadingIconColor = Color.White,
+                        focusedTrailingIconColor = Color.White,
+                        unfocusedTrailingIconColor = Color.White
                     )
+
                 )
             },
+            shape = RoundedCornerShape(8.dp),
             expanded = false,
             onExpandedChange = { },
         ) {
