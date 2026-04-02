@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.dukatrack.ui.screen_names
 
 
 @Composable
@@ -22,6 +21,11 @@ fun AppNavigation(){
         }
         composable(screen_names.Products) {
             ProductsScreen(
+                navController = navController
+            )
+        }
+        composable ( screen_names.NewSale ){
+            NewSaleScreen(
                 navController = navController
             )
         }

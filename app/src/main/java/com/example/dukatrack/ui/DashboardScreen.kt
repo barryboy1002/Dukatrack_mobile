@@ -167,7 +167,15 @@ fun SidebarContent(navController: NavController) {
                     }
                 }
             )
-            SidebarItem("New Sale", Icons.Outlined.AddShoppingCart)
+            SidebarItem(label = "New Sale",
+                icon = Icons.Outlined.AddShoppingCart,
+                isSelected = currentRoute == screen_names.NewSale,
+                onClick = {
+                    if (currentRoute != screen_names.NewSale) {
+                        navController.navigate(screen_names.NewSale)
+                    }
+                }
+            )
             SidebarItem("Sales History", Icons.Outlined.History)
             SidebarItem("Stock", Icons.Outlined.Layers)
             SidebarItem("Suppliers", Icons.Outlined.LocalShipping)
