@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +44,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -68,11 +73,18 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProductsScreen(navController: NavController){
     var query  by rememberSaveable { mutableStateOf("")}
-    var showEditSheet by remember { mutableStateOf(false) }
+    var showProductSheet by remember { mutableStateOf(false) }
     var selectedProductName by remember { mutableStateOf("") }
-    var showAddDrop by remember{mutableStateOf(false)}
-    var showCategory by remember{mutableStateOf(false)}
-    var showSort by remember{mutableStateOf(false)}
+    var isEditing by remember { mutableStateOf(false) }
+    
+    // Manage categories list
+    val categories = remember { mutableStateListOf("Flour", "Sugar", "Cooking Oil", "Electronics", "Groceries") }
+    var showCategoryDialog by remember { mutableStateOf(false) }
+
+    // State for the dropdowns
+    var showMoreMenu by remember{mutableStateOf(false)}
+    var showFilterMenu by remember{mutableStateOf(false)}
+    var showSortMenu by remember{mutableStateOf(false)}
     
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -80,6 +92,7 @@ fun ProductsScreen(navController: NavController){
     val items = listOf("Cupcake", "Donut", "Eclair", "Froyo", "Gingerbread", "Honeycomb",
         "Ice Cream Sandwich", "Jelly Bean", "KitKat", "Lollipop", "Marshmallow",
         "Nougat", "Oreo", "Pie")
+    
     val filteredItems by remember{
         derivedStateOf { if(query.isEmpty()){
             items
@@ -88,6 +101,7 @@ fun ProductsScreen(navController: NavController){
         }
         }
     }
+
     MainLayout(navController = navController, title = "Products") { paddingValues ->
         Column(modifier = Modifier
             .fillMaxSize()
@@ -102,71 +116,98 @@ fun ProductsScreen(navController: NavController){
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 trailingIcon = { Icon(Icons.Default.MoreVert, contentDescription = "More options") }
             )
+            
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ){
-                Surface(
-                    color = Color.White.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.clickable { showCategory  = true }
-                ){
-                    Text(
-                        text="Filter",
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    DropdownMenu(
-                            expanded = showCategory,
-                            onDismissRequest = { showCategory = false }
-                    ) {
-                        //figure out loop for categories
-                        DropdownMenuItem(text = { Text("All categories") }, onClick = { /* Handle add click */ })
-                        DropdownMenuItem(text = { Text("Flour") }, onClick = { /* Handle edit click */ })
+                // Filter Dropdown
+                Box {
+                    Surface(
+                        color = Color.White.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.clickable { showFilterMenu = true }
+                    ){
+                        Text(
+                            text="Filter",
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
-
+                    DropdownMenu(
+                        expanded = showFilterMenu,
+                        onDismissRequest = { showFilterMenu = false }
+                    ) {
+                        DropdownMenuItem(text = { Text("All Categories") }, onClick = { showFilterMenu = false })
+                        categories.forEach { category ->
+                            DropdownMenuItem(text = { Text(category) }, onClick = { showFilterMenu = false })
+                        }
+                    }
                 }
+                
                 Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    color = Color.White.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.clickable { showSort = true }
-                ){
-                    Text(
-                        text="Sort",
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                
+                // Sort Dropdown
+                Box {
+                    Surface(
+                        color = Color.White.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.clickable { showSortMenu = true }
+                    ){
+                        Text(
+                            text="Sort",
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                     DropdownMenu(
-                        expanded = showSort,
-                        onDismissRequest = { showSort = false }
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false }
                     ) {
-                        //figure out loop for categories
-                        DropdownMenuItem(text = { Text("Ascending") }, onClick = { /* Handle add click */ })
-                        DropdownMenuItem(text = { Text("Descending") }, onClick = { /* Handle edit click */ })
+                        DropdownMenuItem(text = { Text("Ascending") }, onClick = { showSortMenu = false })
+                        DropdownMenuItem(text = { Text("Descending") }, onClick = { showSortMenu = false })
                     }
                 }
+                
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { showAddDrop = true}) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert, 
-                        contentDescription = "More options",
-                        tint = Color.White
-                    )
+                
+                // More Menu
+                Box {
+                    IconButton(onClick = { showMoreMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert, 
+                            contentDescription = "More options",
+                            tint = Color.White
+                        )
+                    }
                     DropdownMenu(
-                        expanded = showAddDrop,
-                        onDismissRequest = { showAddDrop = false }
+                        expanded = showMoreMenu,
+                        onDismissRequest = { showMoreMenu = false }
                     ) {
-                        DropdownMenuItem(text = { Text("Add Product") }, onClick = { /* Handle add click */ })
-                        DropdownMenuItem(text = { Text("Add New Category") }, onClick = { /* Handle edit click */ })
+                        DropdownMenuItem(
+                            text = { Text("Add Product") }, 
+                            onClick = { 
+                                showMoreMenu = false
+                                isEditing = false
+                                selectedProductName = ""
+                                showProductSheet = true 
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Add New Category") }, 
+                            onClick = { 
+                                showMoreMenu = false
+                                showCategoryDialog = true 
+                            }
+                        )
                     }
                 }
-
             }
+            
             LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -181,48 +222,106 @@ fun ProductsScreen(navController: NavController){
                         itemPrice = "Ksh 150",
                         onClick = {
                             selectedProductName = filteredItems[index]
-                            showEditSheet = true
+                            isEditing = true
+                            showProductSheet = true
                         }
                     )
                 }
             }
         }
 
-        if (showEditSheet) {
+        // Reusable Product Form Sheet (Add/Edit)
+        if (showProductSheet) {
             ModalBottomSheet(
-                onDismissRequest = { showEditSheet = false },
+                onDismissRequest = { showProductSheet = false },
                 sheetState = sheetState,
                 containerColor = White,
                 dragHandle = null
             ) {
-                EditProductSheet(
+                ProductFormSheet(
+                    title = if (isEditing) "Edit Product" else "Add Product",
                     productName = selectedProductName,
+                    categories = categories,
                     onDismiss = {
                         scope.launch { sheetState.hide() }.invokeOnCompletion {
-                            if (!sheetState.isVisible) showEditSheet = false
+                            if (!sheetState.isVisible) showProductSheet = false
                         }
                     }
                 )
             }
         }
+
+        // Category Dialog
+        if (showCategoryDialog) {
+            CategoryDialog(
+                onDismiss = { showCategoryDialog = false },
+                onAdd = { newCategory ->
+                    if (newCategory.isNotBlank()) categories.add(newCategory)
+                    showCategoryDialog = false
+                }
+            )
+        }
     }
 }
 
 @Composable
-fun EditProductSheet(
+fun CategoryDialog(
+    onDismiss: () -> Unit,
+    onAdd: (String) -> Unit
+) {
+    var categoryName by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Manage Category", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                Text("Enter category name", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+                Spacer(modifier = Modifier.height(16.dp))
+                EditField(
+                    label = "NAME", 
+                    value = categoryName, 
+                    onValueChange = { categoryName = it },
+                    placeholder = "e.g. Beverages"
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onAdd(categoryName) },
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextMuted)
+            }
+        },
+        containerColor = White,
+        shape = RoundedCornerShape(16.dp)
+    )
+}
+
+@Composable
+fun ProductFormSheet(
+    title: String,
     productName: String,
+    categories: List<String>,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(productName) }
-    var category by remember { mutableStateOf("Flour") }
+    var category by remember { mutableStateOf(if (categories.isNotEmpty()) categories[0] else "Uncategorized") }
     var barcode by remember { mutableStateOf("") }
-    var buyingPrice by remember { mutableStateOf("150") }
-    var sellingPrice by remember { mutableStateOf("180") }
+    var buyingPrice by remember { mutableStateOf("") }
+    var sellingPrice by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf("") }
     var brand by remember { mutableStateOf("") }
     var lowStockAlert by remember { mutableStateOf("10") }
     var initialStock by remember { mutableStateOf("0") }
     var additionalInfo by remember { mutableStateOf("") }
+
+    var categoryExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -236,7 +335,7 @@ fun EditProductSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Edit Product",
+                title,
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             IconButton(onClick = onDismiss) {
@@ -249,13 +348,67 @@ fun EditProductSheet(
         EditField(label = "PRODUCT NAME *", value = name, onValueChange = { name = it })
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            EditField(modifier = Modifier.weight(1f), label = "CATEGORY", value = category, onValueChange = { category = it })
+            // Category Dropdown
+            Column(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
+                Text(
+                    text = "CATEGORY",
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
+                    color = TextMuted
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Box {
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryGreen,
+                            unfocusedBorderColor = Color(0xFFE5E7EB),
+                            focusedContainerColor = White,
+                            unfocusedContainerColor = White
+                        )
+                    )
+                    // Transparent layer to capture click for dropdown
+                    Box(modifier = Modifier.matchParentSize().clickable { categoryExpanded = true })
+                    
+                    DropdownMenu(
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false },
+                        modifier = Modifier.fillMaxWidth(0.45f)
+                    ) {
+                        categories.forEach { cat ->
+                            DropdownMenuItem(
+                                text = { Text(cat) },
+                                onClick = {
+                                    category = cat
+                                    categoryExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
             EditField(modifier = Modifier.weight(1f), label = "BARCODE", value = barcode, onValueChange = { barcode = it }, placeholder = "Optional")
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            EditField(modifier = Modifier.weight(1f), label = "BUYING PRICE (KSH) *", value = buyingPrice, onValueChange = { buyingPrice = it })
-            EditField(modifier = Modifier.weight(1f), label = "SELLING PRICE (KSH) *", value = sellingPrice, onValueChange = { sellingPrice = it })
+            EditField(
+                modifier = Modifier.weight(1f), 
+                label = "BUYING PRICE (KSH) *", 
+                value = buyingPrice, 
+                onValueChange = { buyingPrice = it },
+                keyboardType = KeyboardType.Number
+            )
+            EditField(
+                modifier = Modifier.weight(1f), 
+                label = "SELLING PRICE (KSH) *", 
+                value = sellingPrice, 
+                onValueChange = { sellingPrice = it },
+                keyboardType = KeyboardType.Number
+            )
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -264,8 +417,8 @@ fun EditProductSheet(
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            EditField(modifier = Modifier.weight(1f), label = "LOW STOCK ALERT AT", value = lowStockAlert, onValueChange = { lowStockAlert = it })
-            EditField(modifier = Modifier.weight(1f), label = "INITIAL STOCK QUANTITY", value = initialStock, onValueChange = { initialStock = it })
+            EditField(modifier = Modifier.weight(1f), label = "LOW STOCK ALERT AT", value = lowStockAlert, onValueChange = { lowStockAlert = it }, keyboardType = KeyboardType.Number)
+            EditField(modifier = Modifier.weight(1f), label = "INITIAL STOCK QUANTITY", value = initialStock, onValueChange = { initialStock = it }, keyboardType = KeyboardType.Number)
         }
 
         EditField(label = "ADDITIONAL INFO", value = additionalInfo, onValueChange = { additionalInfo = it }, placeholder = "Purpose, usage notes, etc.", singleLine = false, minLines = 3)
@@ -301,7 +454,8 @@ fun EditField(
     modifier: Modifier = Modifier,
     placeholder: String = "",
     singleLine: Boolean = true,
-    minLines: Int = 1
+    minLines: Int = 1,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         Text(
@@ -315,11 +469,21 @@ fun EditField(
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { input ->
+                // Basic numeric validation if needed
+                if (keyboardType == KeyboardType.Number) {
+                    if (input.isEmpty() || input.all { it.isDigit() || it == '.' }) {
+                        onValueChange(input)
+                    }
+                } else {
+                    onValueChange(input)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(placeholder, color = TextMuted.copy(alpha = 0.5f)) },
             singleLine = singleLine,
             minLines = minLines,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             textStyle = TextStyle(fontSize = 14.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = PrimaryGreen,
