@@ -29,7 +29,10 @@ fun AppNavigation(){
                 navController = navController
             )
         }
+        composable(screen_names.SalesHistory) {
+            SalesHistoryScreen(
+                navController = navController
+            )
+        }
     }
-
-
 }

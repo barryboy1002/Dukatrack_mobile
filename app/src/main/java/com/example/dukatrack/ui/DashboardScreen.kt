@@ -176,7 +176,16 @@ fun SidebarContent(navController: NavController) {
                     }
                 }
             )
-            SidebarItem("Sales History", Icons.Outlined.History)
+            SidebarItem(
+                label = "Sales History",
+                icon = Icons.Outlined.History,
+                isSelected = currentRoute == screen_names.SalesHistory,
+                onClick = {
+                    if (currentRoute != screen_names.SalesHistory) {
+                        navController.navigate(screen_names.SalesHistory)
+                    }
+                }
+            )
             SidebarItem("Stock", Icons.Outlined.Layers)
             SidebarItem("Suppliers", Icons.Outlined.LocalShipping)
             SidebarItem("Reports", Icons.Outlined.Assessment)

@@ -4,4 +4,5 @@ object screen_names {
     const val Dashboard = "dashboard"
     const val Products = "products"
     const val NewSale = "new sales"
+    const val SalesHistory = "sales history"
 }

@@ -84,7 +84,7 @@ fun NewSaleScreen(navController: NavController) {
     var query by rememberSaveable { mutableStateOf("") }
     var showCart by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
+    //-- hardcoded data to be removed and replaced with backend -- //
     val products = remember {
         listOf(
             SaleProduct("Unga wa Ngano 2kg", "Flour", "KSh 180", "24 bags left"),
@@ -93,6 +93,7 @@ fun NewSaleScreen(navController: NavController) {
             SaleProduct("Sugar 1kg", "Flour", "KSh 160", "8 kg left")
         )
     }
+    // -- end of fake data --//
 
     MainLayout(navController = navController, title = "New Sale") { paddingValues ->
         Column(
