@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
@@ -365,7 +367,6 @@ fun SalesChartCard() {
     var showMenu by remember { mutableStateOf(false) }
     val mperiods = listOf("Weekly", "Monthly", "Yearly")
     var selectedperiod by remember { mutableStateOf("Weekly") }
-    var mTextFieldSize by remember { mutableStateOf(Size.Zero) }
 
     val chartData = remember(selectedperiod) {
         when (selectedperiod) {
@@ -403,61 +404,91 @@ fun SalesChartCard() {
         border = BorderStroke(1.dp, BorderGray),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChartTab(
-                        label = "Sales",
-                        isSelected = selectedTab == "Sales",
-                        onClick = { selectedTab = "Sales" }
-                    )
-                    ChartTab(
-                        label = "Products",
-                        isSelected = selectedTab == "Products",
-                        onClick = { selectedTab = "Products" }
-                    )
-                    ChartTab(
-                        label = "Branch Sales",
-                        isSelected = selectedTab == "Branch",
-                        isLocked = true,
-                        onClick = { selectedTab = "Branch" }
-                    )
-                }
-
-                Surface(
-                    modifier = Modifier
-                        .clickable { showMenu = true }
-                        .onGloballyPositioned { coordinates ->
-                            mTextFieldSize = coordinates.size.toSize()
-                        },
-                    shape = RoundedCornerShape(16.dp),
-                    color = PrimaryGreen
+        Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = selectedperiod,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        text = "Sales Performance",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = TextDark
                     )
+                    
+                    Box {
+                        Surface(
+                            modifier = Modifier
+                                .clickable { showMenu = true },
+                            shape = RoundedCornerShape(16.dp),
+                            color = PrimaryGreen
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = selectedperiod,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                    color = White,
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = AppIcons.ArrowDropDown,
+                                    contentDescription = null,
+                                    tint = White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
 
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false },
-                        modifier = Modifier.width(mTextFieldSize.width.dp)
-                    ) {
-                        mperiods.forEach { label ->
-                            DropdownMenuItem(
-                                text = { Text(text = label) },
-                                onClick = {
-                                    selectedperiod = label
-                                    showMenu = false
-                                }
-                            )
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                            modifier = Modifier
+                                .widthIn(min = 100.dp)
+                                .background(White)
+                        ) {
+                            mperiods.forEach { label ->
+                                DropdownMenuItem(
+                                    text = { Text(text = label, color = TextDark) },
+                                    onClick = {
+                                        selectedperiod = label
+                                        showMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    ChartTab(
+                        isSelected = selectedTab == "Sales",
+                        label = "Sales",
+                        onClick = { selectedTab = "Sales" },
+                        modifier = Modifier.weight(1f)
+                    )
+                    ChartTab(
+                        isSelected = selectedTab == "Products",
+                        label = "Products",
+                        onClick = { selectedTab = "Products" },
+                        modifier = Modifier.weight(1f)
+                    )
+                    ChartTab(
+                        isSelected = selectedTab == "Branch",
+                        label = "Branch Sales",
+                        isLocked = true,
+                        onClick = { selectedTab = "Branch" },
+                        modifier = Modifier.weight(1.2f)
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
@@ -586,34 +617,39 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
 
 @Composable
 fun ChartTab(
-    label: String,
     isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    label: String,
     isLocked: Boolean = false,
     onClick: () -> Unit
 ) {
     Surface(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
         color = if (isSelected) PrimaryGreen.copy(alpha = 0.1f) else Color.Transparent,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelLarge.copy(
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                 ),
-                color = if (isSelected) PrimaryGreen else TextMuted
+                color = if (isSelected) PrimaryGreen else TextMuted,
+                maxLines = 1,
+                softWrap = false
             )
             if (isLocked) {
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(2.dp))
                 Icon(
                     imageVector = AppIcons.Lock,
                     contentDescription = null,
                     tint = TextMuted,
-                    modifier = Modifier.size(12.dp)
+                    modifier = Modifier.size(10.dp)
                 )
             }
         }
