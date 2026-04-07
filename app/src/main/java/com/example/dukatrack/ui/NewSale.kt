@@ -19,35 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CurrencyExchange
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,51 +67,47 @@ fun NewSaleScreen(navController: NavController) {
     }
     // -- end of fake data --//
 
-    MainLayout(navController = navController, title = "New Sale") { paddingValues ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // Search Bar
+        ProductSearchBar(
+            query = query,
+            onQueryChange = { query = it },
+            onSearch = { /* Handle search */ },
+            placeholder = { Text("Search product or scan barcode") },
+            leadingIcon = { Icon(AppIcons.Search, contentDescription = "Search") }
+        )
+
+        // Action Buttons Row
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(DarkNavy)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Search Bar
-            ProductSearchBar(
-                query = query,
-                onQueryChange = { query = it },
-                onSearch = { /* Handle search */ },
-                placeholder = { Text("Search product or scan barcode") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") }
-            )
-
-            // Action Buttons Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+            ActionButton(icon = AppIcons.QrCodeScanner, label = "Barcode", onClick = {})
+            ActionButton(icon = AppIcons.CameraAlt, label = "Image", onClick = {})
+            ActionButton(icon = AppIcons.FilterList, label = "Filter", onClick = {})
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(
+                onClick = { showCart = true },
+                modifier = Modifier.background(White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
             ) {
-                ActionButton(icon = Icons.Default.QrCodeScanner, label = "Barcode", onClick = {})
-                ActionButton(icon = Icons.Default.CameraAlt, label = "Image", onClick = {})
-                ActionButton(icon = Icons.Default.FilterList, label = "Filter", onClick = {})
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(
-                    onClick = { showCart = true },
-                    modifier = Modifier.background(White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-                ) {
-                    Icon(Icons.Default.ShoppingCart, contentDescription = "Cart", tint = White)
-                }
+                Icon(AppIcons.ShoppingCart, contentDescription = "Cart", tint = White)
             }
+        }
 
-            // Products List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(products) { product ->
-                    SaleProductItem(product = product)
-                }
+        // Products List
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(products) { product ->
+                SaleProductItem(product = product)
             }
         }
     }
@@ -232,7 +200,7 @@ fun CartModal() {
                             modifier = Modifier.size(16.dp)
                         ) {
                             Icon(
-                                Icons.Default.KeyboardArrowUp,
+                                AppIcons.KeyboardArrowUp,
                                 contentDescription = "Increase",
                                 tint = TextMuted
                             )
@@ -242,7 +210,7 @@ fun CartModal() {
                             modifier = Modifier.size(16.dp)
                         ) {
                             Icon(
-                                Icons.Default.KeyboardArrowDown,
+                                AppIcons.KeyboardArrowDown,
                                 contentDescription = "Decrease",
                                 tint = TextMuted
                             )
@@ -289,14 +257,14 @@ fun CartModal() {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             PaymentMethodButton(
-                icon = Icons.Default.CurrencyExchange,
+                icon = AppIcons.CurrencyExchange,
                 label = "Cash",
                 isSelected = selectedPayment == "Cash",
                 modifier = Modifier.weight(1f),
                 onClick = { selectedPayment = "Cash" }
             )
             PaymentMethodButton(
-                icon = Icons.Default.PhoneAndroid,
+                icon = AppIcons.PhoneAndroid,
                 label = "M-Pesa",
                 isSelected = selectedPayment == "M-Pesa",
                 modifier = Modifier.weight(1f),
@@ -345,7 +313,7 @@ fun CartModal() {
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(24.dp))
+                Icon(AppIcons.CheckCircle, contentDescription = null, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     "Complete Sale",
@@ -453,7 +421,7 @@ fun SaleProductItem(product: SaleProduct) {
                     if (product.isLowStock) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            imageVector = Icons.Default.Warning,
+                            imageVector = AppIcons.Warning,
                             contentDescription = "Low Stock",
                             tint = RedColor,
                             modifier = Modifier.size(12.dp)
@@ -482,7 +450,7 @@ fun SaleProductItem(product: SaleProduct) {
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(AppIcons.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Add", style = MaterialTheme.typography.labelLarge)
                 }

@@ -18,29 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -102,165 +80,170 @@ fun ProductsScreen(navController: NavController){
         }
     }
 
-    MainLayout(navController = navController, title = "Products") { paddingValues ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .background(DarkNavy)
+    Column(modifier = Modifier
+        .fillMaxSize()
+    ){
+        ProductSearchBar(
+            query = query,
+            onQueryChange = { query = it },
+            onSearch = { /* Handle search submission */ },
+            placeholder = { Text("Search products...", color = Color.White.copy(alpha = 0.6f)) },
+            leadingIcon = { Icon(AppIcons.Search, contentDescription = "Search", tint = Color.White.copy(alpha = 0.6f)) },
+            trailingIcon = { Icon(AppIcons.MoreVert, contentDescription = "More options", tint = Color.White.copy(alpha = 0.6f)) }
+        )
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ){
-            ProductSearchBar(
-                query = query,
-                onQueryChange = { query = it },
-                onSearch = { /* Handle search submission */ },
-                placeholder = { Text("Search products...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                trailingIcon = { Icon(Icons.Default.MoreVert, contentDescription = "More options") }
-            )
-            
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                // Filter Dropdown
-                Box {
-                    Surface(
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.clickable { showFilterMenu = true }
-                    ){
-                        Text(
-                            text="Filter",
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showFilterMenu,
-                        onDismissRequest = { showFilterMenu = false }
-                    ) {
-                        DropdownMenuItem(text = { Text("All Categories") }, onClick = { showFilterMenu = false })
-                        categories.forEach { category ->
-                            DropdownMenuItem(text = { Text(category) }, onClick = { showFilterMenu = false })
-                        }
-                    }
+            // Filter Dropdown
+            Box {
+                Surface(
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.clickable { showFilterMenu = true }
+                ){
+                    Text(
+                        text="Filter",
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // Sort Dropdown
-                Box {
-                    Surface(
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.clickable { showSortMenu = true }
-                    ){
-                        Text(
-                            text="Sort",
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showSortMenu,
-                        onDismissRequest = { showSortMenu = false }
-                    ) {
-                        DropdownMenuItem(text = { Text("Ascending") }, onClick = { showSortMenu = false })
-                        DropdownMenuItem(text = { Text("Descending") }, onClick = { showSortMenu = false })
-                    }
-                }
-                
-                Spacer(modifier = Modifier.weight(1f))
-                
-                // More Menu
-                Box {
-                    IconButton(onClick = { showMoreMenu = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert, 
-                            contentDescription = "More options",
-                            tint = Color.White
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showMoreMenu,
-                        onDismissRequest = { showMoreMenu = false }
-                    ) {
+                DropdownMenu(
+                    expanded = showFilterMenu,
+                    onDismissRequest = { showFilterMenu = false },
+                    modifier = Modifier.background(White)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("All Categories", color = Color.Black) }, 
+                        onClick = { showFilterMenu = false }
+                    )
+                    categories.forEach { category ->
                         DropdownMenuItem(
-                            text = { Text("Add Product") }, 
-                            onClick = { 
-                                showMoreMenu = false
-                                isEditing = false
-                                selectedProductName = ""
-                                showProductSheet = true 
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Add New Category") }, 
-                            onClick = { 
-                                showMoreMenu = false
-                                showCategoryDialog = true 
-                            }
+                            text = { Text(category, color = Color.Black) }, 
+                            onClick = { showFilterMenu = false }
                         )
                     }
                 }
             }
             
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f).semantics {
-                    traversalIndex = 1f
-                },
-            ) {
-                items(count = filteredItems.size) { index ->
-                    ProductListItem(
-                        itemName = filteredItems[index],
-                        itemDescription = "Active",
-                        itemPrice = "Ksh 150",
-                        onClick = {
-                            selectedProductName = filteredItems[index]
-                            isEditing = true
-                            showProductSheet = true
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            // Sort Dropdown
+            Box {
+                Surface(
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.clickable { showSortMenu = true }
+                ){
+                    Text(
+                        text="Sort",
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                DropdownMenu(
+                    expanded = showSortMenu,
+                    onDismissRequest = { showSortMenu = false },
+                    modifier = Modifier.background(White)
+                ) {
+                    DropdownMenuItem(text = { Text("Ascending", color = Color.Black) }, onClick = { showSortMenu = false })
+                    DropdownMenuItem(text = { Text("Descending", color = Color.Black) }, onClick = { showSortMenu = false })
+                }
+            }
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // More Menu
+            Box {
+                IconButton(onClick = { showMoreMenu = true }) {
+                    Icon(
+                        imageVector = AppIcons.MoreVert, 
+                        contentDescription = "More options",
+                        tint = Color.White
+                    )
+                }
+                DropdownMenu(
+                    expanded = showMoreMenu,
+                    onDismissRequest = { showMoreMenu = false },
+                    modifier = Modifier.background(White)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Add Product", color = Color.Black) }, 
+                        onClick = { 
+                            showMoreMenu = false
+                            isEditing = false
+                            selectedProductName = ""
+                            showProductSheet = true 
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Add New Category", color = Color.Black) }, 
+                        onClick = { 
+                            showMoreMenu = false
+                            showCategoryDialog = true 
                         }
                     )
                 }
             }
         }
-
-        // Reusable Product Form Sheet (Add/Edit)
-        if (showProductSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showProductSheet = false },
-                sheetState = sheetState,
-                containerColor = White,
-                dragHandle = null
-            ) {
-                ProductFormSheet(
-                    title = if (isEditing) "Edit Product" else "Add Product",
-                    productName = selectedProductName,
-                    categories = categories,
-                    onDismiss = {
-                        scope.launch { sheetState.hide() }.invokeOnCompletion {
-                            if (!sheetState.isVisible) showProductSheet = false
-                        }
+        
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(1f).semantics {
+                traversalIndex = 1f
+            },
+        ) {
+            items(count = filteredItems.size) { index ->
+                ProductListItem(
+                    itemName = filteredItems[index],
+                    itemDescription = "Active",
+                    itemPrice = "Ksh 150",
+                    onClick = {
+                        selectedProductName = filteredItems[index]
+                        isEditing = true
+                        showProductSheet = true
                     }
                 )
             }
         }
+    }
 
-        // Category Dialog
-        if (showCategoryDialog) {
-            CategoryDialog(
-                onDismiss = { showCategoryDialog = false },
-                onAdd = { newCategory ->
-                    if (newCategory.isNotBlank()) categories.add(newCategory)
-                    showCategoryDialog = false
+    // Reusable Product Form Sheet (Add/Edit)
+    if (showProductSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showProductSheet = false },
+            sheetState = sheetState,
+            containerColor = White,
+            dragHandle = null
+        ) {
+            ProductFormSheet(
+                title = if (isEditing) "Edit Product" else "Add Product",
+                productName = selectedProductName,
+                categories = categories,
+                onDismiss = {
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        if (!sheetState.isVisible) showProductSheet = false
+                    }
                 }
             )
         }
+    }
+
+    // Category Dialog
+    if (showCategoryDialog) {
+        CategoryDialog(
+            onDismiss = { showCategoryDialog = false },
+            onAdd = { newCategory ->
+                if (newCategory.isNotBlank()) categories.add(newCategory)
+                showCategoryDialog = false
+            }
+        )
     }
 }
 
@@ -339,7 +322,7 @@ fun ProductFormSheet(
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             IconButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextMuted)
+                Icon(AppIcons.Close, contentDescription = "Close", tint = TextMuted)
             }
         }
 
@@ -362,7 +345,7 @@ fun ProductFormSheet(
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                        trailingIcon = { Icon(AppIcons.ArrowDropDown, contentDescription = null) },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryGreen,
@@ -504,7 +487,7 @@ fun ProductSearchBar(
     onSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder : @Composable () -> Unit = {Text("Search Products")},
-    leadingIcon : @Composable (()-> Unit)? = {Icon(Icons.Default.Search, contentDescription = "Search bar")},
+    leadingIcon : @Composable (()-> Unit)? = {Icon(AppIcons.Search, contentDescription = "Search bar")},
     trailingIcon: @Composable (() -> Unit)? = null,
     ){
     Box(
@@ -537,7 +520,7 @@ fun ProductSearchBar(
                     trailingIcon = {
                         if (query.isNotEmpty()) {
                             IconButton(onClick = { onQueryChange("") }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear search")
+                                Icon(AppIcons.Close, contentDescription = "Clear search")
                             }
                         } else {
                             trailingIcon?.invoke()

@@ -16,21 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -90,13 +76,10 @@ fun SalesHistoryScreen(navController: NavController) {
         derivedStateOf { filteredSales.size }
     }
 
-    MainLayout(navController = navController, title = "Sales History") { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(DarkNavy)
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
             // Filters Section
             Column(
                 modifier = Modifier
@@ -110,7 +93,7 @@ fun SalesHistoryScreen(navController: NavController) {
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Search receipt or customer...", color = White.copy(alpha = 0.6f)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = White.copy(alpha = 0.6f)) },
+                    leadingIcon = { Icon(AppIcons.Search, contentDescription = null, tint = White.copy(alpha = 0.6f)) },
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = White.copy(alpha = 0.1f),
@@ -141,7 +124,7 @@ fun SalesHistoryScreen(navController: NavController) {
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CalendarToday,
+                                imageVector = AppIcons.CalendarToday,
                                 contentDescription = "Pick Date",
                                 tint = White,
                                 modifier = Modifier.size(20.dp)
@@ -166,7 +149,7 @@ fun SalesHistoryScreen(navController: NavController) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(selectedPayment, color = White, fontSize = 14.sp)
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = White)
+                                Icon(AppIcons.ArrowDropDown, contentDescription = null, tint = White)
                             }
                         }
                         DropdownMenu(
@@ -218,7 +201,6 @@ fun SalesHistoryScreen(navController: NavController) {
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -240,7 +222,7 @@ fun SaleHistoryItem(sale: SaleRecord) {
                     Text(sale.customer, color = TextMuted, fontSize = 14.sp)
                 }
                 IconButton(onClick = { /* View details */ }) {
-                    Icon(Icons.Default.Visibility, contentDescription = "View", tint = TextMuted)
+                    Icon(AppIcons.Visibility, contentDescription = "View", tint = TextMuted)
                 }
             }
             

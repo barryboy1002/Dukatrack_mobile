@@ -19,32 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.AutoGraph
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material.icons.outlined.AddShoppingCart
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.LocalShipping
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,23 +53,20 @@ import com.example.dukatrack.ui.theme.pchartcolors
 
 @Composable
 fun DashboardScreen(navController: NavController) {
-    MainLayout(navController = navController, title = "Dashboard") { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(DarkNavy),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            item {
-                SummaryCardsGrid()
-            }
-            item {
-                SalesChartCard()
-            }
-            item {
-                TopProductsCard()
-            }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            SummaryCardsGrid()
+        }
+        item {
+            SalesChartCard()
+        }
+        item {
+            TopProductsCard()
         }
     }
 }
@@ -115,7 +87,7 @@ fun SidebarContent(navController: NavController) {
             modifier = Modifier.padding(24.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Storefront,
+                imageVector = AppIcons.Storefront,
                 contentDescription = "Logo",
                 tint = PrimaryGreen,
                 modifier = Modifier.size(28.dp)
@@ -147,7 +119,7 @@ fun SidebarContent(navController: NavController) {
         ) {
             SidebarItem(
                 label = "Dashboard",
-                icon = Icons.Outlined.GridView,
+                icon = AppIcons.GridView,
                 isSelected = currentRoute == screen_names.Dashboard,
                 onClick = {
                     if (currentRoute != screen_names.Dashboard) {
@@ -159,7 +131,7 @@ fun SidebarContent(navController: NavController) {
             )
             SidebarItem(
                 label = "Products",
-                icon = Icons.Outlined.Inventory2,
+                icon = AppIcons.Inventory2,
                 isSelected = currentRoute == screen_names.Products,
                 onClick = {
                     if (currentRoute != screen_names.Products) {
@@ -168,7 +140,7 @@ fun SidebarContent(navController: NavController) {
                 }
             )
             SidebarItem(label = "New Sale",
-                icon = Icons.Outlined.AddShoppingCart,
+                icon = AppIcons.AddShoppingCart,
                 isSelected = currentRoute == screen_names.NewSale,
                 onClick = {
                     if (currentRoute != screen_names.NewSale) {
@@ -178,7 +150,7 @@ fun SidebarContent(navController: NavController) {
             )
             SidebarItem(
                 label = "Sales History",
-                icon = Icons.Outlined.History,
+                icon = AppIcons.History,
                 isSelected = currentRoute == screen_names.SalesHistory,
                 onClick = {
                     if (currentRoute != screen_names.SalesHistory) {
@@ -186,10 +158,10 @@ fun SidebarContent(navController: NavController) {
                     }
                 }
             )
-            SidebarItem("Stock", Icons.Outlined.Layers)
-            SidebarItem("Suppliers", Icons.Outlined.LocalShipping)
-            SidebarItem("Reports", Icons.Outlined.Assessment)
-            SidebarItem("Settings", Icons.Outlined.Settings)
+            SidebarItem("Stock", AppIcons.Layers)
+            SidebarItem("Suppliers", AppIcons.LocalShipping)
+            SidebarItem("Reports", AppIcons.Assessment)
+            SidebarItem("Settings", AppIcons.Settings)
 
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider(thickness = 0.5.dp, color = White.copy(alpha = 0.1f))
@@ -197,7 +169,7 @@ fun SidebarContent(navController: NavController) {
 
             SidebarItem(
                 label = "Logout",
-                icon = Icons.AutoMirrored.Filled.Logout,
+                icon = AppIcons.Logout,
                 textColor = RedColor,
                 iconColor = RedColor
             )
@@ -299,7 +271,7 @@ fun SummaryCardsGrid() {
                 modifier = Modifier.weight(1f),
                 title = "Products",
                 value = "248",
-                icon = Icons.Default.Inventory,
+                icon = AppIcons.Inventory,
                 iconColor = Color(0xFF0EA5E9),
                 iconBg = Color(0xFFE0F2FE)
             )
@@ -307,7 +279,7 @@ fun SummaryCardsGrid() {
                 modifier = Modifier.weight(1f),
                 title = "Low Stock",
                 value = "5",
-                icon = Icons.Default.ErrorOutline,
+                icon = AppIcons.ErrorOutline,
                 iconColor = Color(0xFFEF4444),
                 iconBg = Color(0xFFFEE2E2),
                 valueColor = RedColor
@@ -321,7 +293,7 @@ fun SummaryCardsGrid() {
                 modifier = Modifier.weight(1f),
                 title = "Today",
                 value = "KSh 4,200",
-                icon = Icons.Default.AccountBalanceWallet,
+                icon = AppIcons.AccountBalanceWallet,
                 iconColor = Color(0xFF10B981),
                 iconBg = Color(0xFFD1FAE5)
             )
@@ -329,7 +301,7 @@ fun SummaryCardsGrid() {
                 modifier = Modifier.weight(1f),
                 title = "This Month",
                 value = "KSh 31k",
-                icon = Icons.Default.AutoGraph,
+                icon = AppIcons.AutoGraph,
                 iconColor = Color(0xFF8B5CF6),
                 iconBg = Color(0xFFEDE9FE)
             )
@@ -638,7 +610,7 @@ fun ChartTab(
             if (isLocked) {
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(
-                    imageVector = Icons.Default.Lock,
+                    imageVector = AppIcons.Lock,
                     contentDescription = null,
                     tint = TextMuted,
                     modifier = Modifier.size(12.dp)
@@ -715,7 +687,7 @@ fun TopProductsCard(modifier: Modifier = Modifier){
                         )
                     }
                     Icon(
-                        imageVector = Icons.Filled.ChevronRight,
+                        imageVector = AppIcons.ChevronRight,
                         contentDescription = null,
                         tint = BorderGray,
                         modifier = Modifier.size(20.dp)
