@@ -133,7 +133,7 @@ fun SidebarContent(navController: NavController) {
             )
             SidebarItem(
                 label = "Products",
-                icon = AppIcons.Inventory2,
+                icon = AppIcons.Inventory,
                 isSelected = currentRoute == screen_names.Products,
                 onClick = {
                     if (currentRoute != screen_names.Products) {
