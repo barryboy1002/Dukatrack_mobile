@@ -2,6 +2,7 @@ package com.example.dukatrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,18 +17,24 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,7 +56,7 @@ data class SaleRecord(
     val receiptId: String,
     val customer: String,
     val itemsCount: Int,
-    val amount: String,
+    val amount: Int,
     val paymentMethod: String,
     val time: String
 )
@@ -57,14 +64,32 @@ data class SaleRecord(
 @Composable
 fun SalesHistoryScreen(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
+    var selectedPayment by remember { mutableStateOf("All Payments") }
+    var expanded by remember { mutableStateOf(false) }
     
     val sales = remember {
         listOf(
-            SaleRecord("RCP-A1B2C3", "Walk-In", 3, "KSh 450", "Cash", "9:00 AM"),
-            SaleRecord("RCP-D4E5F6", "John Kamau", 1, "KSh 220", "M-Pesa", "10:15 AM"),
-            SaleRecord("RCP-G7H8I9", "Walk-In", 2, "KSh 594", "Cash", "11:30 AM"),
-            SaleRecord("RCP-J1K2L3", "Mary Wanjiku", 5, "KSh 780", "M-Pesa", "1:45 PM")
+            SaleRecord("RCP-A1B2C3", "Walk-In", 3, 450, "Cash", "9:00 AM"),
+            SaleRecord("RCP-D4E5F6", "John Kamau", 1, 220, "M-Pesa", "10:15 AM"),
+            SaleRecord("RCP-G7H8I9", "Walk-In", 2, 594, "Cash", "11:30 AM"),
+            SaleRecord("RCP-J1K2L3", "Mary Wanjiku", 5, 780, "M-Pesa", "1:45 PM")
         )
+    }
+
+    val filteredSales by remember(searchQuery, selectedPayment) {
+        derivedStateOf {
+            sales.filter {
+                (it.receiptId.contains(searchQuery, ignoreCase = true) || it.customer.contains(searchQuery, ignoreCase = true)) &&
+                (selectedPayment == "All Payments" || it.paymentMethod == selectedPayment)
+            }
+        }
+    }
+
+    val totalAmount by remember {
+        derivedStateOf { filteredSales.sumOf { it.amount } }
+    }
+    val salesCount by remember {
+        derivedStateOf { filteredSales.size }
     }
 
     MainLayout(navController = navController, title = "Sales History") { paddingValues ->
@@ -81,34 +106,85 @@ fun SalesHistoryScreen(navController: NavController) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search receipt or customer...", color = White.copy(alpha = 0.6f)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = White.copy(alpha = 0.6f)) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = White.copy(alpha = 0.1f),
+                        unfocusedContainerColor = White.copy(alpha = 0.1f),
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedTextColor = White,
+                        unfocusedTextColor = White
+                    ),
+                    singleLine = true
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(label = "06/04/2026", icon = Icons.Default.CalendarToday, modifier = Modifier.weight(1f))
-                    FilterChip(label = "06/04/2026", icon = Icons.Default.CalendarToday, modifier = Modifier.weight(1f))
-                }
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FilterChip(label = "All Payments", icon = Icons.Default.FilterList, modifier = Modifier.weight(0.4f))
-                    
-                    // Search Bar
+                    // Date Picker Button
                     Surface(
-                        modifier = Modifier.weight(0.6f),
+                        onClick = { /* Open Date Picker */ },
                         color = White.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.Search, contentDescription = null, tint = White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Receipt or customer...", color = White.copy(alpha = 0.6f), fontSize = 14.sp)
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = "Pick Date",
+                                tint = White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text("Select Date", color = White, fontSize = 14.sp)
+                        }
+                    }
+
+                    // Payment Dropdown
+                    val paymentMethods = listOf("All Payments", "Cash", "M-Pesa")
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        Surface(
+                            onClick = { expanded = true },
+                            color = White.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(selectedPayment, color = White, fontSize = 14.sp)
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = White)
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier.background(White)
+                        ) {
+                            paymentMethods.forEach { method ->
+                                DropdownMenuItem(
+                                    text = { Text(method, color = TextDark) },
+                                    onClick = {
+                                        selectedPayment = method
+                                        expanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -124,12 +200,12 @@ fun SalesHistoryScreen(navController: NavController) {
             ) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text("TOTAL", color = TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    Text("KSh 2,044", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("KSh ${"%,d".format(totalAmount)}", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.width(24.dp))
                 Column(horizontalAlignment = Alignment.End) {
                     Text("SALES", color = TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    Text("4", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("$salesCount", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -139,28 +215,10 @@ fun SalesHistoryScreen(navController: NavController) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(sales) { sale ->
+                items(filteredSales) { sale ->
                     SaleHistoryItem(sale)
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun FilterChip(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = White.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(label, color = White, fontSize = 14.sp)
-            Icon(icon, contentDescription = null, tint = White, modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -198,7 +256,7 @@ fun SaleHistoryItem(sale: SaleRecord) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${sale.itemsCount} ${if(sale.itemsCount > 1) "items" else "item"}", color = TextMuted, fontSize = 14.sp)
                     Spacer(modifier = Modifier.width(16.dp))
-                    Text(sale.amount, fontWeight = FontWeight.Bold, color = TextDark)
+                    Text("KSh ${sale.amount}", fontWeight = FontWeight.Bold, color = TextDark)
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
