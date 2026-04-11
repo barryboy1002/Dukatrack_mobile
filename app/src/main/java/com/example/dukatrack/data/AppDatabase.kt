@@ -1,0 +1,44 @@
+package com.example.dukatrack.data
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+
+@Database(
+    entities = [
+        CategoryEntity::class,
+        ProductEntity::class,
+        SupplierEntity::class,
+        StockEntity::class,
+        PurchasesEntity::class,
+        SalesEntity::class,
+        SaleItemEntity::class
+    ],
+    version = 1,
+    exportSchema = false
+)
+abstract class AppDatabase : RoomDatabase() {
+    // We will add DAO getters here once we create them
+    // abstract fun productDao(): ProductDao
+    abstract fun salesDao(): SalesDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "dukatrack_database"
+                )
+                .fallbackToDestructiveMigration() // Use this during development to reset DB on schema changes
+                .build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}

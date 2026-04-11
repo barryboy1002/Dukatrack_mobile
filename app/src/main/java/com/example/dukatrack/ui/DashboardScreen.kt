@@ -1,5 +1,6 @@
 package com.example.dukatrack.ui
 
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -15,17 +16,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,14 +42,15 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.toSize
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.dukatrack.event.DashboardEvent
+import com.example.dukatrack.state.ChartTab
+import com.example.dukatrack.state.DashboardState
+import com.example.dukatrack.state.period
 import com.example.dukatrack.ui.theme.BorderGray
 import com.example.dukatrack.ui.theme.DarkNavy
 import com.example.dukatrack.ui.theme.PrimaryGreen
@@ -54,7 +61,11 @@ import com.example.dukatrack.ui.theme.White
 import com.example.dukatrack.ui.theme.pchartcolors
 
 @Composable
-fun DashboardScreen(navController: NavController) {
+fun DashboardScreen(navController: NavController,
+                    state : DashboardState,
+                    onEvent: (DashboardEvent) -> Unit,
+                    modifier: Modifier = Modifier) {
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -65,10 +76,10 @@ fun DashboardScreen(navController: NavController) {
             SummaryCardsGrid()
         }
         item {
-            SalesChartCard()
+            SalesChartCard(state)
         }
         item {
-            TopProductsCard()
+            TopProductsCard(state)
         }
     }
 }
@@ -362,40 +373,15 @@ fun SummaryCard(
 }
 
 @Composable
-fun SalesChartCard() {
-    var selectedTab by remember { mutableStateOf("Sales") }
-    var showMenu by remember { mutableStateOf(false) }
-    val mperiods = listOf("Weekly", "Monthly", "Yearly")
-    var selectedperiod by remember { mutableStateOf("Weekly") }
+fun SalesChartCard(state: DashboardState) {
 
-    val chartData = remember(selectedperiod) {
-        when (selectedperiod) {
-            "Weekly" -> mapOf(
-                "Mon" to 3500f,
-                "Tue" to 4200f,
-                "Wed" to 3800f,
-                "Thu" to 5100f,
-                "Fri" to 4800f,
-                "Sat" to 6200f,
-                "Sun" to 5800f
-            )
-            "Monthly" -> mapOf(
-                "Week 1" to 12000f, "Week 2" to 15500f,
-                "Week 3" to 9000f, "Week 4" to 18200f
-            )
-            "Yearly" -> mapOf(
-                "Jan" to 45000f,
-                "Mar" to 52000f,
-                "May" to 48000f,
-                "Jul" to 61000f,
-                "Sep" to 55000f,
-                "Nov" to 72000f
-            )
-            else -> emptyMap()
-        }
-    }
-    val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
-    val topProductData = productData.toList().sortedByDescending { (_, value) -> value }.take(3)
+
+    val chartData = state.dailySales.associate { it.saleDate.toString() to it.totalSales.toFloat() }
+    val productData = state.productSales.associate {  it.name to it.totalAmount.toFloat() }
+
+
+
+
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -420,7 +406,7 @@ fun SalesChartCard() {
                     Box {
                         Surface(
                             modifier = Modifier
-                                .clickable { showMenu = true },
+                                .clickable { state.showMenu = true },
                             shape = RoundedCornerShape(16.dp),
                             color = PrimaryGreen
                         ) {
@@ -429,7 +415,7 @@ fun SalesChartCard() {
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = selectedperiod,
+                                    text = state.period.name,
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                                     color = White,
                                     maxLines = 1
@@ -445,18 +431,18 @@ fun SalesChartCard() {
                         }
 
                         DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
+                            expanded = state.showMenu,
+                            onDismissRequest = { state.showMenu = false },
                             modifier = Modifier
                                 .widthIn(min = 100.dp)
                                 .background(White)
                         ) {
-                            mperiods.forEach { label ->
+                            period.entries.forEach { label ->
                                 DropdownMenuItem(
-                                    text = { Text(text = label, color = TextDark) },
+                                    text = { Text(text = label.name, color = TextDark) },
                                     onClick = {
-                                        selectedperiod = label
-                                        showMenu = false
+                                        state.period = label
+                                        state.showMenu = false
                                     }
                                 )
                             }
@@ -470,23 +456,23 @@ fun SalesChartCard() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    ChartTab(
-                        isSelected = selectedTab == "Sales",
+                    chartTab(
+                        isSelected =  state.chartTab == ChartTab.sales,
                         label = "Sales",
-                        onClick = { selectedTab = "Sales" },
+                        onClick = { state.chartTab = ChartTab.sales },
                         modifier = Modifier.weight(1f)
                     )
-                    ChartTab(
-                        isSelected = selectedTab == "Products",
+                    chartTab(
+                        isSelected = state.chartTab == ChartTab.sales,
                         label = "Products",
-                        onClick = { selectedTab = "Products" },
+                        onClick = { state.chartTab = ChartTab.sales },
                         modifier = Modifier.weight(1f)
                     )
-                    ChartTab(
-                        isSelected = selectedTab == "Branch",
+                    chartTab(
+                        isSelected = state.chartTab == ChartTab.branches,
                         label = "Branch Sales",
                         isLocked = true,
-                        onClick = { selectedTab = "Branch" },
+                        onClick = { state.chartTab = ChartTab.branches },
                         modifier = Modifier.weight(1.2f)
                     )
                 }
@@ -497,10 +483,10 @@ fun SalesChartCard() {
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-                if (selectedTab == "Sales") {
-                    Areachart(data = chartData, modifier = Modifier.fillMaxSize())
-                } else if (selectedTab == "Products") {
-                    ProductsChart(data = productData, modifier = Modifier.fillMaxSize())
+                if (state.chartTab == ChartTab.sales) {
+                    Areachart(chartData, modifier = Modifier.fillMaxSize())
+                } else if (state.chartTab == ChartTab.product) {
+                    ProductsChart(productData, modifier = Modifier.fillMaxSize())
                 } else {
                     Text("Upgrade")
                 }
@@ -512,7 +498,7 @@ fun SalesChartCard() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (selectedTab == "Sales") {
+                if (state.chartTab == ChartTab.sales) {
                     chartData.keys.forEach { day ->
                         Text(
                             day,
@@ -520,7 +506,7 @@ fun SalesChartCard() {
                             color = TextMuted
                         )
                     }
-                } else if (selectedTab == "Products") {
+                } else if (state.chartTab == ChartTab.product) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -528,7 +514,7 @@ fun SalesChartCard() {
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        topProductData.forEachIndexed { index, product ->
+                        productData.entries.forEachIndexed { index, product ->
                             Row(
                                 modifier = Modifier,
                                 horizontalArrangement = Arrangement.spacedBy(1.dp)
@@ -541,7 +527,7 @@ fun SalesChartCard() {
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    product.first,
+                                    product.key,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextMuted
                                 )
@@ -616,7 +602,7 @@ fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ChartTab(
+fun chartTab(
     isSelected: Boolean,
     modifier: Modifier = Modifier,
     label: String,
@@ -657,9 +643,9 @@ fun ChartTab(
 }
 
 @Composable
-fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier) {
+fun ProductsChart(data : Map<String,Float>, modifier: Modifier = Modifier) {
     val values = data.values.toList()
-    val totalvalues = values.sum()
+    val totalvalues =  values.sum()
 
     Canvas(modifier = modifier) {
         val canvasSize = size.minDimension
@@ -685,8 +671,8 @@ fun ProductsChart(data: Map<String, Float>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TopProductsCard(modifier: Modifier = Modifier){
-    val productData = mapOf("Electronics" to 40f, "Grocery" to 30f, "Clothing" to 30f)
+fun TopProductsCard(state: DashboardState,modifier: Modifier = Modifier){
+    val productData = state.productSales.associate { it.name to it.totalAmount.toFloat() }
     val productsList = productData.toList()
     Card(
         modifier = Modifier.fillMaxWidth(),
