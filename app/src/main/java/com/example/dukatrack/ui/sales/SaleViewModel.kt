@@ -2,7 +2,12 @@ package com.example.dukatrack.ui.sales
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.dukatrack.data.CategoryEntity
+import com.example.dukatrack.data.ProductEntity
+import com.example.dukatrack.data.SaleItemEntity
 import com.example.dukatrack.data.SalesDao
+import com.example.dukatrack.data.SalesEntity
+import com.example.dukatrack.data.StockEntity
 import com.example.dukatrack.event.DashboardEvent
 import com.example.dukatrack.state.ChartTab
 import com.example.dukatrack.state.DashboardState
@@ -12,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class SaleViewModel(private val salesDao: SalesDao): ViewModel() {
@@ -84,14 +90,71 @@ class SaleViewModel(private val salesDao: SalesDao): ViewModel() {
           when(event){
                is DashboardEvent.SetPeriod -> {
                     _state.update {it.copy(showMenu =  false)}
-                    _period.value = period.valueOf(event.period)
+                    _period.value = event.period
                }
                is DashboardEvent.SetSelectedTab -> {
-                    _chartTab.value = ChartTab.valueOf(event.tab)
-               }
+                    _state.update { it.copy(showMenu = false)}
+                    _chartTab.value = event.tab
+
+                }
+
                is DashboardEvent.ToggleMenu -> {
-                    _state.update { it.copy(showMenu = !it.showMenu) }
+                    _state.update { it.copy(showMenu =!it.showMenu) }
                }
+               is DashboardEvent.SeedData -> {
+                    seedFakeData()
+               }
+
+          }
+     }
+
+     private fun seedFakeData() {
+          viewModelScope.launch {
+               val categoryId = salesDao.insertCategory(CategoryEntity(name = "Electronics"))
+               val productId = salesDao.insertProduct(
+                    ProductEntity(
+                         categoryId = categoryId,
+                         name = "Smartphone",
+                         description = "Latest model",
+                         sellingPrice = 500.0,
+                         buyingPrice = 300.0,
+                         units = "pcs",
+                         brand = "Samsung",
+                         imageUrl = null,
+                         additionalInfo = null,
+                         createdAt = System.currentTimeMillis()
+                    )
+               )
+               salesDao.insertStock(
+                    StockEntity(
+                         productId = productId,
+                         branchId = 1,
+                         quantity = 5,
+                         lowStockThreshold = 10
+                    )
+               )
+
+               val now = System.currentTimeMillis()
+               val saleId = salesDao.insertSale(
+                    SalesEntity(
+                         businessId = 1,
+                         branchId = 1,
+                         userId = 1,
+                         customerName = "John Doe",
+                         totalAmount = 500.0,
+                         paymentMethod = "Cash",
+                         saleDate = now
+                    )
+               )
+               salesDao.insertSaleItem(
+                    SaleItemEntity(
+                         saleId = saleId,
+                         productId = productId,
+                         quantity = 1,
+                         unitPrice = 500.0,
+                         totalAmount = 500.0
+                    )
+               )
           }
      }
 }

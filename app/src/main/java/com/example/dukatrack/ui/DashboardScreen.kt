@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +67,10 @@ fun DashboardScreen(navController: NavController,
                     onEvent: (DashboardEvent) -> Unit,
                     modifier: Modifier = Modifier) {
 
+    LaunchedEffect(Unit) {
+        onEvent(DashboardEvent.SeedData)
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -73,10 +78,10 @@ fun DashboardScreen(navController: NavController,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            SummaryCardsGrid()
+            SummaryCardsGrid(state)
         }
         item {
-            SalesChartCard(state)
+            SalesChartCard(state,onEvent)
         }
         item {
             TopProductsCard(state)
@@ -274,7 +279,7 @@ fun SidebarItem(
 }
 
 @Composable
-fun SummaryCardsGrid() {
+fun SummaryCardsGrid(state: DashboardState) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -283,7 +288,7 @@ fun SummaryCardsGrid() {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Products",
-                value = "248",
+                value = state.totalProducts.toString(),
                 icon = AppIcons.Inventory,
                 iconColor = Color(0xFF0EA5E9),
                 iconBg = Color(0xFFE0F2FE)
@@ -291,7 +296,7 @@ fun SummaryCardsGrid() {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Low Stock",
-                value = "5",
+                value = state.lowStock.toString(),
                 icon = AppIcons.ErrorOutline,
                 iconColor = Color(0xFFEF4444),
                 iconBg = Color(0xFFFEE2E2),
@@ -305,7 +310,7 @@ fun SummaryCardsGrid() {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "Today",
-                value = "KSh 4,200",
+                value = state.todaySales.toString(),
                 icon = AppIcons.AccountBalanceWallet,
                 iconColor = Color(0xFF10B981),
                 iconBg = Color(0xFFD1FAE5)
@@ -313,7 +318,7 @@ fun SummaryCardsGrid() {
             SummaryCard(
                 modifier = Modifier.weight(1f),
                 title = "This Month",
-                value = "KSh 31k",
+                value = state.monthlySales.toString(),
                 icon = AppIcons.AutoGraph,
                 iconColor = Color(0xFF8B5CF6),
                 iconBg = Color(0xFFEDE9FE)
@@ -373,15 +378,10 @@ fun SummaryCard(
 }
 
 @Composable
-fun SalesChartCard(state: DashboardState) {
-
+fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
 
     val chartData = state.dailySales.associate { it.saleDate.toString() to it.totalSales.toFloat() }
     val productData = state.productSales.associate {  it.name to it.totalAmount.toFloat() }
-
-
-
-
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -406,7 +406,7 @@ fun SalesChartCard(state: DashboardState) {
                     Box {
                         Surface(
                             modifier = Modifier
-                                .clickable { state.showMenu = true },
+                                .clickable { onEvent(DashboardEvent.ToggleMenu) },
                             shape = RoundedCornerShape(16.dp),
                             color = PrimaryGreen
                         ) {
@@ -441,8 +441,7 @@ fun SalesChartCard(state: DashboardState) {
                                 DropdownMenuItem(
                                     text = { Text(text = label.name, color = TextDark) },
                                     onClick = {
-                                        state.period = label
-                                        state.showMenu = false
+                                        onEvent(DashboardEvent.SetPeriod(label))
                                     }
                                 )
                             }
@@ -459,20 +458,20 @@ fun SalesChartCard(state: DashboardState) {
                     chartTab(
                         isSelected =  state.chartTab == ChartTab.sales,
                         label = "Sales",
-                        onClick = { state.chartTab = ChartTab.sales },
+                        onClick = { onEvent(DashboardEvent.SetSelectedTab(ChartTab.sales)) },
                         modifier = Modifier.weight(1f)
                     )
                     chartTab(
-                        isSelected = state.chartTab == ChartTab.sales,
+                        isSelected = state.chartTab == ChartTab.product,
                         label = "Products",
-                        onClick = { state.chartTab = ChartTab.sales },
+                        onClick = { onEvent(DashboardEvent.SetSelectedTab(ChartTab.product)) },
                         modifier = Modifier.weight(1f)
                     )
                     chartTab(
                         isSelected = state.chartTab == ChartTab.branches,
                         label = "Branch Sales",
                         isLocked = true,
-                        onClick = { state.chartTab = ChartTab.branches },
+                        onClick = { onEvent(DashboardEvent.SetSelectedTab(ChartTab.branches)) },
                         modifier = Modifier.weight(1.2f)
                     )
                 }
