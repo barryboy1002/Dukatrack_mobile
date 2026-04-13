@@ -22,11 +22,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,73 +38,91 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.dukatrack.ui.theme.DarkNavy
 import com.example.dukatrack.ui.theme.PrimaryGreen
 import com.example.dukatrack.ui.theme.TextMuted
 import com.example.dukatrack.ui.theme.White
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.dukatrack.data.CategoryEntity
+import com.example.dukatrack.data.ProductDao
+import com.example.dukatrack.ui.products.ProductViewModel
 import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductsScreen(navController: NavController){
-    var query  by rememberSaveable { mutableStateOf("")}
+fun ProductsScreen(
+    navController: NavController,
+    viewModel: ProductViewModel = viewModel()
+) {
+    val query by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val products by viewModel.products.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+
     var showProductSheet by remember { mutableStateOf(false) }
-    var selectedProductName by remember { mutableStateOf("") }
+    var selectedProduct by remember { mutableStateOf<ProductDao.ProductWithStock?>(null) }
     var isEditing by remember { mutableStateOf(false) }
-    
-    // Manage categories list
-    val categories = remember { mutableStateListOf("Flour", "Sugar", "Cooking Oil", "Electronics", "Groceries") }
+
     var showCategoryDialog by remember { mutableStateOf(false) }
 
     // State for the dropdowns
-    var showMoreMenu by remember{mutableStateOf(false)}
-    var showFilterMenu by remember{mutableStateOf(false)}
-    var showSortMenu by remember{mutableStateOf(false)}
-    
+    var showMoreMenu by remember { mutableStateOf(false) }
+    var showFilterMenu by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
-    val items = listOf("Cupcake", "Donut", "Eclair", "Froyo", "Gingerbread", "Honeycomb",
-        "Ice Cream Sandwich", "Jelly Bean", "KitKat", "Lollipop", "Marshmallow",
-        "Nougat", "Oreo", "Pie")
-    
-    val filteredItems by remember{
-        derivedStateOf { if(query.isEmpty()){
-            items
-        }else{
-            items.filter{it.contains(query,ignoreCase = true) }
-        }
+    val filteredItems by remember(query, products) {
+        derivedStateOf {
+            if (query.isEmpty()) {
+                products
+            } else {
+                products.filter { it.name.contains(query, ignoreCase = true) }
+            }
         }
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-    ){
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
         ProductSearchBar(
             query = query,
-            onQueryChange = { query = it },
+            onQueryChange = { viewModel.onSearchQueryChange(it) },
             onSearch = { /* Handle search submission */ },
             placeholder = { Text("Search products...", color = Color.White.copy(alpha = 0.6f)) },
-            leadingIcon = { Icon(AppIcons.Search, contentDescription = "Search", tint = Color.White.copy(alpha = 0.6f)) },
-            trailingIcon = { Icon(AppIcons.MoreVert, contentDescription = "More options", tint = Color.White.copy(alpha = 0.6f)) }
+            leadingIcon = {
+                Icon(
+                    AppIcons.Search,
+                    contentDescription = "Search",
+                    tint = Color.White.copy(alpha = 0.6f)
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    AppIcons.MoreVert,
+                    contentDescription = "More options",
+                    tint = Color.White.copy(alpha = 0.6f)
+                )
+            }
         )
-        
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
-        ){
+        ) {
             // Filter Dropdown
             Box {
                 Surface(
                     color = Color.White.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.clickable { showFilterMenu = true }
-                ){
+                ) {
                     Text(
-                        text="Filter",
+                        text = "Filter",
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.bodyMedium
@@ -118,29 +134,29 @@ fun ProductsScreen(navController: NavController){
                     modifier = Modifier.background(White)
                 ) {
                     DropdownMenuItem(
-                        text = { Text("All Categories", color = Color.Black) }, 
+                        text = { Text("All Categories", color = Color.Black) },
                         onClick = { showFilterMenu = false }
                     )
                     categories.forEach { category ->
                         DropdownMenuItem(
-                            text = { Text(category, color = Color.Black) }, 
+                            text = { Text(category.name, color = Color.Black) },
                             onClick = { showFilterMenu = false }
                         )
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             // Sort Dropdown
             Box {
                 Surface(
                     color = Color.White.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.clickable { showSortMenu = true }
-                ){
+                ) {
                     Text(
-                        text="Sort",
+                        text = "Sort",
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.bodyMedium
@@ -151,18 +167,22 @@ fun ProductsScreen(navController: NavController){
                     onDismissRequest = { showSortMenu = false },
                     modifier = Modifier.background(White)
                 ) {
-                    DropdownMenuItem(text = { Text("Ascending", color = Color.Black) }, onClick = { showSortMenu = false })
-                    DropdownMenuItem(text = { Text("Descending", color = Color.Black) }, onClick = { showSortMenu = false })
+                    DropdownMenuItem(
+                        text = { Text("Ascending", color = Color.Black) },
+                        onClick = { showSortMenu = false })
+                    DropdownMenuItem(
+                        text = { Text("Descending", color = Color.Black) },
+                        onClick = { showSortMenu = false })
                 }
             }
-            
+
             Spacer(modifier = Modifier.weight(1f))
-            
+
             // More Menu
             Box {
                 IconButton(onClick = { showMoreMenu = true }) {
                     Icon(
-                        imageVector = AppIcons.MoreVert, 
+                        imageVector = AppIcons.MoreVert,
                         contentDescription = "More options",
                         tint = Color.White
                     )
@@ -173,39 +193,42 @@ fun ProductsScreen(navController: NavController){
                     modifier = Modifier.background(White)
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Add Product", color = Color.Black) }, 
-                        onClick = { 
+                        text = { Text("Add Product", color = Color.Black) },
+                        onClick = {
                             showMoreMenu = false
                             isEditing = false
-                            selectedProductName = ""
-                            showProductSheet = true 
+                            selectedProduct = null
+                            showProductSheet = true
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Add New Category", color = Color.Black) }, 
-                        onClick = { 
+                        text = { Text("Add New Category", color = Color.Black) },
+                        onClick = {
                             showMoreMenu = false
-                            showCategoryDialog = true 
+                            showCategoryDialog = true
                         }
                     )
                 }
             }
         }
-        
+
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f).semantics {
-                traversalIndex = 1f
-            },
+            modifier = Modifier
+                .weight(1f)
+                .semantics {
+                    traversalIndex = 1f
+                },
         ) {
             items(count = filteredItems.size) { index ->
+                val product = filteredItems[index]
                 ProductListItem(
-                    itemName = filteredItems[index],
-                    itemDescription = "Active",
-                    itemPrice = "Ksh 150",
+                    itemName = product.name,
+                    itemDescription = if ((product.stockQuantity ?: 0) <= 0) "Out of Stock" else "Stock: ${product.stockQuantity}",
+                    itemPrice = "Ksh ${product.sellingPrice ?: 0}",
                     onClick = {
-                        selectedProductName = filteredItems[index]
+                        selectedProduct = product
                         isEditing = true
                         showProductSheet = true
                     }
@@ -224,8 +247,38 @@ fun ProductsScreen(navController: NavController){
         ) {
             ProductFormSheet(
                 title = if (isEditing) "Edit Product" else "Add Product",
-                productName = selectedProductName,
+                product = selectedProduct,
                 categories = categories,
+                onSave = { name, categoryId, buyingPrice, sellingPrice, unit, brand, lowStockAlert, initialStock, additionalInfo ->
+                    if (isEditing && selectedProduct != null) {
+                        viewModel.updateProduct(
+                            selectedProduct!!.productId,
+                            name,
+                            categoryId,
+                            buyingPrice,
+                            sellingPrice,
+                            unit,
+                            brand,
+                            lowStockAlert,
+                            additionalInfo
+                        )
+                    } else {
+                        viewModel.addProduct(
+                            name,
+                            categoryId,
+                            buyingPrice,
+                            sellingPrice,
+                            unit,
+                            brand,
+                            lowStockAlert,
+                            initialStock,
+                            additionalInfo
+                        )
+                    }
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        if (!sheetState.isVisible) showProductSheet = false
+                    }
+                },
                 onDismiss = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         if (!sheetState.isVisible) showProductSheet = false
@@ -240,7 +293,9 @@ fun ProductsScreen(navController: NavController){
         CategoryDialog(
             onDismiss = { showCategoryDialog = false },
             onAdd = { newCategory ->
-                if (newCategory.isNotBlank()) categories.add(newCategory)
+                if (newCategory.isNotBlank()) {
+                    viewModel.addCategory(newCategory)
+                }
                 showCategoryDialog = false
             }
         )
@@ -289,22 +344,24 @@ fun CategoryDialog(
 @Composable
 fun ProductFormSheet(
     title: String,
-    productName: String,
-    categories: List<String>,
+    product: ProductDao.ProductWithStock?,
+    categories: List<CategoryEntity>,
+    onSave: (String, Long, Double, Double, String, String, Int, Int, String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var name by remember { mutableStateOf(productName) }
-    var category by remember { mutableStateOf(if (categories.isNotEmpty()) categories[0] else "Uncategorized") }
-    var barcode by remember { mutableStateOf("") }
-    var buyingPrice by remember { mutableStateOf("") }
-    var sellingPrice by remember { mutableStateOf("") }
-    var unit by remember { mutableStateOf("") }
-    var brand by remember { mutableStateOf("") }
-    var lowStockAlert by remember { mutableStateOf("10") }
-    var initialStock by remember { mutableStateOf("0") }
-    var additionalInfo by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(product?.name ?: "") }
+    var selectedCategoryId by remember { mutableStateOf(product?.categoryId ?: (if (categories.isNotEmpty()) categories[0].id else 0L)) }
+    var buyingPrice by remember { mutableStateOf(product?.buyingPrice?.toString() ?: "") }
+    var sellingPrice by remember { mutableStateOf(product?.sellingPrice?.toString() ?: "") }
+    var unit by remember { mutableStateOf(product?.units ?: "") }
+    var brand by remember { mutableStateOf(product?.brand ?: "") }
+    var lowStockAlert by remember { mutableStateOf(product?.lowStockThreshold?.toString() ?: "10") }
+    var initialStock by remember { mutableStateOf(product?.stockQuantity?.toString() ?: "0") }
+    var additionalInfo by remember { mutableStateOf(product?.additionalInfo ?: "") }
 
     var categoryExpanded by remember { mutableStateOf(false) }
+    
+    val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Select Category"
 
     Column(
         modifier = Modifier
@@ -341,7 +398,7 @@ fun ProductFormSheet(
                 Spacer(modifier = Modifier.height(8.dp))
                 Box {
                     OutlinedTextField(
-                        value = category,
+                        value = selectedCategoryName,
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -364,9 +421,9 @@ fun ProductFormSheet(
                     ) {
                         categories.forEach { cat ->
                             DropdownMenuItem(
-                                text = { Text(cat) },
+                                text = { Text(cat.name) },
                                 onClick = {
-                                    category = cat
+                                    selectedCategoryId = cat.id
                                     categoryExpanded = false
                                 }
                             )
@@ -374,7 +431,7 @@ fun ProductFormSheet(
                     }
                 }
             }
-            EditField(modifier = Modifier.weight(1f), label = "BARCODE", value = barcode, onValueChange = { barcode = it }, placeholder = "Optional")
+            EditField(modifier = Modifier.weight(1f), label = "BRAND", value = brand, onValueChange = { brand = it }, placeholder = "Optional")
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -396,12 +453,11 @@ fun ProductFormSheet(
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             EditField(modifier = Modifier.weight(1f), label = "UNIT", value = unit, onValueChange = { unit = it })
-            EditField(modifier = Modifier.weight(1f), label = "BRAND", value = brand, onValueChange = { brand = it }, placeholder = "Optional")
+            EditField(modifier = Modifier.weight(1f), label = "LOW STOCK ALERT AT", value = lowStockAlert, onValueChange = { lowStockAlert = it }, keyboardType = KeyboardType.Number)
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            EditField(modifier = Modifier.weight(1f), label = "LOW STOCK ALERT AT", value = lowStockAlert, onValueChange = { lowStockAlert = it }, keyboardType = KeyboardType.Number)
-            EditField(modifier = Modifier.weight(1f), label = "INITIAL STOCK QUANTITY", value = initialStock, onValueChange = { initialStock = it }, keyboardType = KeyboardType.Number)
+        if (product == null) {
+            EditField(label = "INITIAL STOCK QUANTITY", value = initialStock, onValueChange = { initialStock = it }, keyboardType = KeyboardType.Number)
         }
 
         EditField(label = "ADDITIONAL INFO", value = additionalInfo, onValueChange = { additionalInfo = it }, placeholder = "Purpose, usage notes, etc.", singleLine = false, minLines = 3)
@@ -418,9 +474,22 @@ fun ProductFormSheet(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Button(
-                onClick = onDismiss,
+                onClick = {
+                    onSave(
+                        name,
+                        selectedCategoryId,
+                        buyingPrice.toDoubleOrNull() ?: 0.0,
+                        sellingPrice.toDoubleOrNull() ?: 0.0,
+                        unit,
+                        brand,
+                        lowStockAlert.toIntOrNull() ?: 10,
+                        initialStock.toIntOrNull() ?: 0,
+                        additionalInfo
+                    )
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                enabled = name.isNotBlank() && buyingPrice.isNotBlank() && sellingPrice.isNotBlank()
             ) {
                 Text("Save Product", color = White)
             }

@@ -7,5 +7,5 @@ sealed interface DashboardEvent {
     data class SetPeriod(val period: period) : DashboardEvent
     data class SetSelectedTab(val tab: ChartTab) : DashboardEvent
     object ToggleMenu : DashboardEvent
-    object SeedData : DashboardEvent
+
 }

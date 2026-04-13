@@ -12,6 +12,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.dukatrack.data.AppDatabase
+import com.example.dukatrack.ui.products.ProductViewModel
+import com.example.dukatrack.ui.products.ProductViewModelFactory
 import com.example.dukatrack.ui.sales.SaleViewModel
 import com.example.dukatrack.ui.sales.SaleViewModelFactory
 
@@ -52,7 +54,10 @@ fun AppNavigation() {
                 )
             }
             composable(screen_names.Products) {
-                ProductsScreen(navController = navController)
+                val productViewModel: ProductViewModel = viewModel(
+                    factory = ProductViewModelFactory(database.productDao())
+                )
+                ProductsScreen(navController = navController, viewModel = productViewModel)
             }
             composable(screen_names.NewSale) {
                 NewSaleScreen(navController = navController)

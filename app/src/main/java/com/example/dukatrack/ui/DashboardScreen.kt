@@ -30,8 +30,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,10 +68,6 @@ fun DashboardScreen(navController: NavController,
                     state : DashboardState,
                     onEvent: (DashboardEvent) -> Unit,
                     modifier: Modifier = Modifier) {
-
-    LaunchedEffect(Unit) {
-        onEvent(DashboardEvent.SeedData)
-    }
 
     LazyColumn(
         modifier = Modifier
@@ -498,9 +496,12 @@ fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 if (state.chartTab == ChartTab.sales) {
-                    chartData.keys.forEach { day ->
+                    val formatter = SimpleDateFormat("dd MMM", Locale.getDefault())
+                    chartData.keys.forEach { timestampStr ->
+                        val timestamp = timestampStr.toLongOrNull() ?: 0L
+                        val date = formatter.format(Date(timestamp))
                         Text(
-                            day,
+                            date,
                             style = MaterialTheme.typography.labelSmall,
                             color = TextMuted
                         )
