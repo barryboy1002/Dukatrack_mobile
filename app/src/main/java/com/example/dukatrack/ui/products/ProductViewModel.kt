@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.dukatrack.data.CategoryEntity
 import com.example.dukatrack.data.ProductDao
 import com.example.dukatrack.data.ProductEntity
+import com.example.dukatrack.event.ProductEvent
+import com.example.dukatrack.state.ProductState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -15,90 +18,88 @@ import kotlinx.coroutines.launch
 class ProductViewModel(private val productDao: ProductDao) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery
-
-    val categories: StateFlow<List<CategoryEntity>> = productDao.getAllCategories()
+    
+    private val _categories = productDao.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val products = _searchQuery
+    private val _products = _searchQuery
         .flatMapLatest { query ->
-            if (query.isBlank()) {
-                productDao.getProductsWithStock()
-            } else {
-                // Simplified search for now, could be improved in DAO
-                productDao.getProductsWithStock() 
-            }
+            productDao.searchProductsWithStock(query)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun onSearchQueryChange(newQuery: String) {
-        _searchQuery.value = newQuery
+    val state: StateFlow<ProductState> = combine(
+        _searchQuery,
+        _products,
+        _categories
+    ) { query, products, categories ->
+        ProductState(
+            searchQuery = query,
+            products = products,
+            categories = categories
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProductState())
+
+    fun onEvent(event: ProductEvent) {
+        when (event) {
+            is ProductEvent.SearchQueryChanged -> {
+                _searchQuery.value = event.query
+            }
+            is ProductEvent.AddProduct -> {
+                addProduct(event)
+            }
+            is ProductEvent.UpdateProduct -> {
+                updateProduct(event)
+            }
+            is ProductEvent.AddCategory -> {
+                addCategory(event.name)
+            }
+        }
     }
 
-    fun addProduct(
-        name: String,
-        categoryId: Long,
-        buyingPrice: Double,
-        sellingPrice: Double,
-        unit: String,
-        brand: String,
-        lowStockAlert: Int,
-        initialStock: Int,
-        additionalInfo: String
-    ) {
+    private fun addProduct(event: ProductEvent.AddProduct) {
         viewModelScope.launch {
             val product = ProductEntity(
-                name = name,
-                categoryId = categoryId,
-                buyingPrice = buyingPrice,
-                sellingPrice = sellingPrice,
-                units = unit,
-                brand = brand,
-                description = additionalInfo,
-                additionalInfo = additionalInfo,
+                name = event.name,
+                categoryId = event.categoryId,
+                buyingPrice = event.buyingPrice,
+                sellingPrice = event.sellingPrice,
+                units = event.unit,
+                brand = event.brand,
+                description = event.additionalInfo,
+                additionalInfo = event.additionalInfo,
                 imageUrl = null,
                 createdAt = System.currentTimeMillis()
             )
-            productDao.insertProductWithStock(product, initialStock, lowStockAlert)
+            productDao.insertProductWithStock(product, event.initialStock, event.lowStockAlert)
         }
     }
 
-    fun updateProduct(
-        productId: Long,
-        name: String,
-        categoryId: Long,
-        buyingPrice: Double,
-        sellingPrice: Double,
-        unit: String,
-        brand: String,
-        lowStockAlert: Int,
-        additionalInfo: String
-    ) {
+    private fun updateProduct(event: ProductEvent.UpdateProduct) {
         viewModelScope.launch {
             val product = ProductEntity(
-                productId = productId,
-                name = name,
-                categoryId = categoryId,
-                buyingPrice = buyingPrice,
-                sellingPrice = sellingPrice,
-                units = unit,
-                brand = brand,
-                description = additionalInfo,
-                additionalInfo = additionalInfo,
+                productId = event.productId,
+                name = event.name,
+                categoryId = event.categoryId,
+                buyingPrice = event.buyingPrice,
+                sellingPrice = event.sellingPrice,
+                units = event.unit,
+                brand = event.brand,
+                description = event.additionalInfo,
+                additionalInfo = event.additionalInfo,
                 imageUrl = null,
                 createdAt = System.currentTimeMillis() // Or keep original
             )
             productDao.updateProduct(product)
             
-            // Update stock threshold if needed
-            val stock = productDao.getStockByProductId(productId)
+            val stock = productDao.getStockByProductId(event.productId)
             if (stock != null) {
-                productDao.updateStock(stock.copy(lowStockThreshold = lowStockAlert))
+                productDao.updateStock(stock.copy(lowStockThreshold = event.lowStockAlert))
             }
         }
     }
 
-    fun addCategory(name: String) {
+    private fun addCategory(name: String) {
         viewModelScope.launch {
             productDao.insertCategory(CategoryEntity(name = name))
         }

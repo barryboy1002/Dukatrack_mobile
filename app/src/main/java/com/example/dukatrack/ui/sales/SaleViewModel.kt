@@ -54,9 +54,12 @@ class SaleViewModel(private val salesDao: SalesDao): ViewModel() {
      val monthlySales = salesDao.getMonthlySales(startOfMonth)
           .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0.0)
 
+     val branchSales = salesDao.getBranchSales()
+          .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
      val state = combine(
           _state, _period, _chartTab, productSales, dailySales,
-          totalProducts, lowStock, todaySales, monthlySales
+          totalProducts, lowStock, todaySales, monthlySales, branchSales
      ) { flows ->
           val currentState = flows[0] as DashboardState
           val period = flows[1] as period
@@ -67,6 +70,7 @@ class SaleViewModel(private val salesDao: SalesDao): ViewModel() {
           val lowStockCount = flows[6] as Int
           val todaySalesAmount = flows[7] as Double? ?: 0.0
           val monthlySalesAmount = flows[8] as Double? ?: 0.0
+          val branchSales = flows[9] as List<SalesDao.BranchSales>
 
           currentState.copy(
                period = period,
@@ -76,7 +80,8 @@ class SaleViewModel(private val salesDao: SalesDao): ViewModel() {
                totalProducts = totalProductsCount,
                lowStock = lowStockCount,
                todaySales = todaySalesAmount,
-               monthlySales = monthlySalesAmount
+               monthlySales = monthlySalesAmount,
+               branchSales = branchSales
           )
      }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardState())
 

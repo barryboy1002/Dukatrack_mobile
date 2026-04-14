@@ -15,5 +15,6 @@ data class DashboardState(
     var period: period = com.example.dukatrack.state.period.Weekly,
     val chartTab: ChartTab = ChartTab.sales,
     val productSales: List<SalesDao.ProductSales> = emptyList(),
-    val dailySales: List<SalesDao.DailySales> = emptyList()
+    val dailySales: List<SalesDao.DailySales> = emptyList(),
+    val branchSales: List<SalesDao.BranchSales> = emptyList()
 )

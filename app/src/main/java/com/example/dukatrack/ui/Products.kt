@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dukatrack.data.CategoryEntity
 import com.example.dukatrack.data.ProductDao
+import com.example.dukatrack.event.ProductEvent
 import com.example.dukatrack.ui.products.ProductViewModel
 import kotlinx.coroutines.launch
 
@@ -55,9 +56,7 @@ fun ProductsScreen(
     navController: NavController,
     viewModel: ProductViewModel = viewModel()
 ) {
-    val query by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val products by viewModel.products.collectAsStateWithLifecycle()
-    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     var showProductSheet by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf<ProductDao.ProductWithStock?>(null) }
@@ -73,12 +72,12 @@ fun ProductsScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
-    val filteredItems by remember(query, products) {
+    val filteredItems by remember(state.searchQuery, state.products) {
         derivedStateOf {
-            if (query.isEmpty()) {
-                products
+            if (state.searchQuery.isEmpty()) {
+                state.products
             } else {
-                products.filter { it.name.contains(query, ignoreCase = true) }
+                state.products.filter { it.name.contains(state.searchQuery, ignoreCase = true) }
             }
         }
     }
@@ -88,8 +87,8 @@ fun ProductsScreen(
             .fillMaxSize()
     ) {
         ProductSearchBar(
-            query = query,
-            onQueryChange = { viewModel.onSearchQueryChange(it) },
+            query = state.searchQuery,
+            onQueryChange = { viewModel.onEvent(ProductEvent.SearchQueryChanged(it)) },
             onSearch = { /* Handle search submission */ },
             placeholder = { Text("Search products...", color = Color.White.copy(alpha = 0.6f)) },
             leadingIcon = {
@@ -137,7 +136,7 @@ fun ProductsScreen(
                         text = { Text("All Categories", color = Color.Black) },
                         onClick = { showFilterMenu = false }
                     )
-                    categories.forEach { category ->
+                    state.categories.forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name, color = Color.Black) },
                             onClick = { showFilterMenu = false }
@@ -248,32 +247,32 @@ fun ProductsScreen(
             ProductFormSheet(
                 title = if (isEditing) "Edit Product" else "Add Product",
                 product = selectedProduct,
-                categories = categories,
+                categories = state.categories,
                 onSave = { name, categoryId, buyingPrice, sellingPrice, unit, brand, lowStockAlert, initialStock, additionalInfo ->
                     if (isEditing && selectedProduct != null) {
-                        viewModel.updateProduct(
-                            selectedProduct!!.productId,
-                            name,
-                            categoryId,
-                            buyingPrice,
-                            sellingPrice,
-                            unit,
-                            brand,
-                            lowStockAlert,
-                            additionalInfo
-                        )
+                        viewModel.onEvent(ProductEvent.UpdateProduct(
+                            productId = selectedProduct!!.productId,
+                            name = name,
+                            categoryId = categoryId,
+                            buyingPrice = buyingPrice,
+                            sellingPrice = sellingPrice,
+                            unit = unit,
+                            brand = brand,
+                            lowStockAlert = lowStockAlert,
+                            additionalInfo = additionalInfo
+                        ))
                     } else {
-                        viewModel.addProduct(
-                            name,
-                            categoryId,
-                            buyingPrice,
-                            sellingPrice,
-                            unit,
-                            brand,
-                            lowStockAlert,
-                            initialStock,
-                            additionalInfo
-                        )
+                        viewModel.onEvent(ProductEvent.AddProduct(
+                            name = name,
+                            categoryId = categoryId,
+                            buyingPrice = buyingPrice,
+                            sellingPrice = sellingPrice,
+                            unit = unit,
+                            brand = brand,
+                            lowStockAlert = lowStockAlert,
+                            initialStock = initialStock,
+                            additionalInfo = additionalInfo
+                        ))
                     }
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         if (!sheetState.isVisible) showProductSheet = false
@@ -294,7 +293,7 @@ fun ProductsScreen(
             onDismiss = { showCategoryDialog = false },
             onAdd = { newCategory ->
                 if (newCategory.isNotBlank()) {
-                    viewModel.addCategory(newCategory)
+                    viewModel.onEvent(ProductEvent.AddCategory(newCategory))
                 }
                 showCategoryDialog = false
             }

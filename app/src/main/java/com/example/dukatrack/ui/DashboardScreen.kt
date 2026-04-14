@@ -468,7 +468,7 @@ fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
                     chartTab(
                         isSelected = state.chartTab == ChartTab.branches,
                         label = "Branch Sales",
-                        isLocked = true,
+                        isLocked = false,
                         onClick = { onEvent(DashboardEvent.SetSelectedTab(ChartTab.branches)) },
                         modifier = Modifier.weight(1.2f)
                     )
@@ -481,11 +481,13 @@ fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
                     .height(200.dp)
             ) {
                 if (state.chartTab == ChartTab.sales) {
-                    Areachart(chartData, modifier = Modifier.fillMaxSize())
+                    val sortedChartData = chartData.toSortedMap()
+                    Areachart(sortedChartData, modifier = Modifier.fillMaxSize())
                 } else if (state.chartTab == ChartTab.product) {
                     ProductsChart(productData, modifier = Modifier.fillMaxSize())
-                } else {
-                    Text("Upgrade")
+                } else if (state.chartTab == ChartTab.branches) {
+                    val branchData = state.branchSales.associate { "Branch ${it.branchId}" to it.totalSales.toFloat() }
+                    ProductsChart(branchData, modifier = Modifier.fillMaxSize())
                 }
             }
 
@@ -496,8 +498,9 @@ fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 if (state.chartTab == ChartTab.sales) {
+                    val sortedKeys = chartData.keys.toList().sorted()
                     val formatter = SimpleDateFormat("dd MMM", Locale.getDefault())
-                    chartData.keys.forEach { timestampStr ->
+                    sortedKeys.forEach { timestampStr ->
                         val timestamp = timestampStr.toLongOrNull() ?: 0L
                         val date = formatter.format(Date(timestamp))
                         Text(
@@ -528,6 +531,35 @@ fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     product.key,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted
+                                )
+                            }
+                        }
+                    }
+                } else if (state.chartTab == ChartTab.branches) {
+                    val branchData = state.branchSales.associate { "Branch ${it.branchId}" to it.totalSales.toFloat() }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        branchData.entries.forEachIndexed { index, branch ->
+                            Row(
+                                modifier = Modifier,
+                                horizontalArrangement = Arrangement.spacedBy(1.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(pchartcolors[index % pchartcolors.size])
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    branch.key,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextMuted
                                 )

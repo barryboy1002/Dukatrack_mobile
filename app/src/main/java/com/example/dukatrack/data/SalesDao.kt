@@ -35,7 +35,7 @@ interface SalesDao {
         val name: String,
         val totalAmount: Double
     )
-    @Query("SELECT saleDate,SUM(totalAmount) as totalSales FROM sales GROUP BY saleDate")
+    @Query("SELECT (saleDate / 86400000) * 86400000 as saleDate, SUM(totalAmount) as totalSales FROM sales GROUP BY (saleDate / 86400000) ORDER BY saleDate ASC")
     fun getDailySales(): Flow<List<DailySales>>
 
     @Query("SELECT COUNT(*) FROM products")
@@ -49,6 +49,14 @@ interface SalesDao {
 
     @Query("SELECT SUM(totalAmount) FROM sales WHERE saleDate >= :startOfMonth")
     fun getMonthlySales(startOfMonth: Long): Flow<Double?>
+
+    @Query("SELECT branchId, SUM(totalAmount) as totalSales FROM sales GROUP BY branchId")
+    fun getBranchSales(): Flow<List<BranchSales>>
+
+    data class BranchSales(
+        val branchId: Long,
+        val totalSales: Double
+    )
 
     data class DailySales(
         val saleDate: Long,

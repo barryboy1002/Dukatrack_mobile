@@ -55,9 +55,10 @@ interface ProductDao {
         FROM products p 
         LEFT JOIN stock s ON p.productId = s.productId 
         LEFT JOIN categories c ON p.categoryId = c.id
+        WHERE p.name LIKE '%' || :query || '%'
         ORDER BY p.name ASC
     """)
-    fun getProductsWithStock(): Flow<List<ProductWithStock>>
+    fun searchProductsWithStock(query: String): Flow<List<ProductWithStock>>
 
     data class ProductWithStock(
         val productId: Long,
