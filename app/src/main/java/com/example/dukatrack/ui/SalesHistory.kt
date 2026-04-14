@@ -25,55 +25,36 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.dukatrack.data.SalesDao
+import com.example.dukatrack.ui.sales.SalesHistoryViewModel
 import com.example.dukatrack.ui.theme.DarkNavy
 import com.example.dukatrack.ui.theme.PrimaryGreen
 import com.example.dukatrack.ui.theme.TextDark
 import com.example.dukatrack.ui.theme.TextMuted
 import com.example.dukatrack.ui.theme.White
-
-data class SaleRecord(
-    val receiptId: String,
-    val customer: String,
-    val itemsCount: Int,
-    val amount: Int,
-    val paymentMethod: String,
-    val time: String
-)
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun SalesHistoryScreen(navController: NavController) {
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedPayment by remember { mutableStateOf("All Payments") }
+fun SalesHistoryScreen(
+    navController: NavController,
+    viewModel: SalesHistoryViewModel
+) {
+    val state by viewModel.state.collectAsState()
     var expanded by remember { mutableStateOf(false) }
-    
-    val sales = remember {
-        listOf(
-            SaleRecord("RCP-A1B2C3", "Walk-In", 3, 450, "Cash", "9:00 AM"),
-            SaleRecord("RCP-D4E5F6", "John Kamau", 1, 220, "M-Pesa", "10:15 AM"),
-            SaleRecord("RCP-G7H8I9", "Walk-In", 2, 594, "Cash", "11:30 AM"),
-            SaleRecord("RCP-J1K2L3", "Mary Wanjiku", 5, 780, "M-Pesa", "1:45 PM")
-        )
-    }
 
-    val filteredSales by remember(searchQuery, selectedPayment) {
-        derivedStateOf {
-            sales.filter {
-                (it.receiptId.contains(searchQuery, ignoreCase = true) || it.customer.contains(searchQuery, ignoreCase = true)) &&
-                (selectedPayment == "All Payments" || it.paymentMethod == selectedPayment)
-            }
-        }
+    val totalAmount by remember(state.sales) {
+        derivedStateOf { state.sales.sumOf { it.sale.totalAmount } }
     }
-
-    val totalAmount by remember {
-        derivedStateOf { filteredSales.sumOf { it.amount } }
-    }
-    val salesCount by remember {
-        derivedStateOf { filteredSales.size }
+    val salesCount by remember(state.sales) {
+        derivedStateOf { state.sales.size }
     }
 
     Column(
@@ -89,8 +70,8 @@ fun SalesHistoryScreen(navController: NavController) {
             ) {
                 // Search Bar
                 OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    value = state.searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Search receipt or customer...", color = White.copy(alpha = 0.6f)) },
                     leadingIcon = { Icon(AppIcons.Search, contentDescription = null, tint = White.copy(alpha = 0.6f)) },
@@ -148,7 +129,7 @@ fun SalesHistoryScreen(navController: NavController) {
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(selectedPayment, color = White, fontSize = 14.sp)
+                                Text(state.selectedPayment, color = White, fontSize = 14.sp)
                                 Icon(AppIcons.ArrowDropDown, contentDescription = null, tint = White)
                             }
                         }
@@ -161,7 +142,7 @@ fun SalesHistoryScreen(navController: NavController) {
                                 DropdownMenuItem(
                                     text = { Text(method, color = TextDark) },
                                     onClick = {
-                                        selectedPayment = method
+                                        viewModel.onPaymentMethodChange(method)
                                         expanded = false
                                     }
                                 )
@@ -181,7 +162,7 @@ fun SalesHistoryScreen(navController: NavController) {
             ) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text("TOTAL", color = TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    Text("KSh ${"%,d".format(totalAmount)}", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("KSh ${"%,.0f".format(totalAmount)}", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.width(24.dp))
                 Column(horizontalAlignment = Alignment.End) {
@@ -196,7 +177,7 @@ fun SalesHistoryScreen(navController: NavController) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(filteredSales) { sale ->
+                items(state.sales) { sale ->
                     SaleHistoryItem(sale)
                 }
             }
@@ -204,7 +185,11 @@ fun SalesHistoryScreen(navController: NavController) {
 }
 
 @Composable
-fun SaleHistoryItem(sale: SaleRecord) {
+fun SaleHistoryItem(saleWithCount: SalesDao.SaleWithItemCount) {
+    val sale = saleWithCount.sale
+    val dateFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
+    val timeStr = remember(sale.saleDate) { dateFormat.format(Date(sale.saleDate)) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -218,8 +203,8 @@ fun SaleHistoryItem(sale: SaleRecord) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(sale.receiptId, fontWeight = FontWeight.Bold, color = TextDark)
-                    Text(sale.customer, color = TextMuted, fontSize = 14.sp)
+                    Text("RCP-${sale.saleId}", fontWeight = FontWeight.Bold, color = TextDark)
+                    Text(sale.customerName, color = TextMuted, fontSize = 14.sp)
                 }
                 IconButton(onClick = { /* View details */ }) {
                     Icon(AppIcons.Visibility, contentDescription = "View", tint = TextMuted)
@@ -234,26 +219,28 @@ fun SaleHistoryItem(sale: SaleRecord) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${sale.itemsCount} ${if(sale.itemsCount > 1) "items" else "item"}", color = TextMuted, fontSize = 14.sp)
+                    val count = saleWithCount.itemsCount
+                    Text("$count ${if(count > 1) "items" else "item"}", color = TextMuted, fontSize = 14.sp)
                     Spacer(modifier = Modifier.width(16.dp))
-                    Text("KSh ${sale.amount}", fontWeight = FontWeight.Bold, color = TextDark)
+                    Text("KSh ${"%,.0f".format(sale.totalAmount)}", fontWeight = FontWeight.Bold, color = TextDark)
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val paymentMethod = sale.paymentMethod ?: "N/A"
                     Surface(
-                        color = if (sale.paymentMethod == "Cash") PrimaryGreen.copy(alpha = 0.1f) else Color(0xFF3B82F6).copy(alpha = 0.1f),
+                        color = if (paymentMethod == "Cash") PrimaryGreen.copy(alpha = 0.1f) else Color(0xFF3B82F6).copy(alpha = 0.1f),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = sale.paymentMethod,
+                            text = paymentMethod,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = if (sale.paymentMethod == "Cash") PrimaryGreen else Color(0xFF3B82F6),
+                            color = if (paymentMethod == "Cash") PrimaryGreen else Color(0xFF3B82F6),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(sale.time, color = TextMuted, fontSize = 12.sp)
+                    Text(timeStr, color = TextMuted, fontSize = 12.sp)
                 }
             }
         }

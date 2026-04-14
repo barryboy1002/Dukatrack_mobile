@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.dukatrack.data.SalesDao
 
-class SaleViewModelFactory(private val salesDao: SalesDao) : ViewModelProvider.Factory {
+class SalesHistoryViewModelFactory(private val salesDao: SalesDao) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SaleViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(SalesHistoryViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return SaleViewModel(salesDao) as T
+            return SalesHistoryViewModel(salesDao) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

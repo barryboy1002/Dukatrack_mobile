@@ -14,8 +14,12 @@ import androidx.navigation.compose.rememberNavController
 import com.example.dukatrack.data.AppDatabase
 import com.example.dukatrack.ui.products.ProductViewModel
 import com.example.dukatrack.ui.products.ProductViewModelFactory
-import com.example.dukatrack.ui.sales.SaleViewModel
-import com.example.dukatrack.ui.sales.SaleViewModelFactory
+import com.example.dukatrack.ui.sales.DashboardViewModel
+import com.example.dukatrack.ui.sales.DashboardViewModelFactory
+import com.example.dukatrack.ui.sales.NewSaleViewModel
+import com.example.dukatrack.ui.sales.NewSaleViewModelFactory
+import com.example.dukatrack.ui.sales.SalesHistoryViewModel
+import com.example.dukatrack.ui.sales.SalesHistoryViewModelFactory
 
 @Composable
 fun AppNavigation() {
@@ -26,8 +30,8 @@ fun AppNavigation() {
     // Get ViewModel
     val context = LocalContext.current
     val database = AppDatabase.getDatabase(context)
-    val viewModel: SaleViewModel = viewModel(
-        factory = SaleViewModelFactory(database.salesDao())
+    val viewModel: DashboardViewModel = viewModel(
+        factory = DashboardViewModelFactory(database.salesDao())
     )
     val state by viewModel.state.collectAsState()
 
@@ -60,10 +64,16 @@ fun AppNavigation() {
                 ProductsScreen(navController = navController, viewModel = productViewModel)
             }
             composable(screen_names.NewSale) {
-                NewSaleScreen(navController = navController)
+                val newSaleViewModel: NewSaleViewModel = viewModel(
+                    factory = NewSaleViewModelFactory(database.productDao(), database.salesDao(), database.customerDao())
+                )
+                NewSaleScreen(navController = navController, viewModel = newSaleViewModel)
             }
             composable(screen_names.SalesHistory) {
-                SalesHistoryScreen(navController = navController)
+                val salesHistoryViewModel: SalesHistoryViewModel = viewModel(
+                    factory = SalesHistoryViewModelFactory(database.salesDao())
+                )
+                SalesHistoryScreen(navController = navController, viewModel = salesHistoryViewModel)
             }
         }
     }

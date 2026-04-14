@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,11 +29,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.dukatrack.data.ProductDao
+import com.example.dukatrack.data.SaleItemEntity
+import com.example.dukatrack.data.SalesEntity
+import com.example.dukatrack.event.NewSaleEvent
+import com.example.dukatrack.state.CartItem
+import com.example.dukatrack.state.NewSaleState
+import com.example.dukatrack.ui.sales.NewSaleViewModel
 import com.example.dukatrack.ui.theme.BorderGray
 import com.example.dukatrack.ui.theme.DarkNavy
 import com.example.dukatrack.ui.theme.LightGrayBg
@@ -41,6 +50,9 @@ import com.example.dukatrack.ui.theme.RedColor
 import com.example.dukatrack.ui.theme.TextDark
 import com.example.dukatrack.ui.theme.TextMuted
 import com.example.dukatrack.ui.theme.White
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class SaleProduct(
     val name: String,
@@ -52,20 +64,13 @@ data class SaleProduct(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewSaleScreen(navController: NavController) {
-    var query by rememberSaveable { mutableStateOf("") }
+fun NewSaleScreen(
+    navController: NavController,
+    viewModel: NewSaleViewModel
+) {
+    val state by viewModel.state.collectAsState()
     var showCart by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    //-- hardcoded data to be removed and replaced with backend -- //
-    val products = remember {
-        listOf(
-            SaleProduct("Unga wa Ngano 2kg", "Flour", "KSh 180", "24 bags left"),
-            SaleProduct("Omo 1kg", "Cleaning", "KSh 220", "3 pcs left", isLowStock = true),
-            SaleProduct("Cooking Oil 1L", "Cooking", "KSh 330", "12 litres left"),
-            SaleProduct("Sugar 1kg", "Flour", "KSh 160", "8 kg left")
-        )
-    }
-    // -- end of fake data --//
 
     Column(
         modifier = Modifier
@@ -73,11 +78,11 @@ fun NewSaleScreen(navController: NavController) {
     ) {
         // Search Bar
         ProductSearchBar(
-            query = query,
-            onQueryChange = { query = it },
+            query = state.pSearchQuery,
+            onQueryChange = { viewModel.onEvent(NewSaleEvent.SearchQueryChanged(it)) },
             onSearch = { /* Handle search */ },
-            placeholder = { Text("Search product or scan barcode") },
-            leadingIcon = { Icon(AppIcons.Search, contentDescription = "Search") }
+            placeholder = { Text("Search product or scan barcode", color = Color.Gray) },
+            leadingIcon = { Icon(AppIcons.Search, contentDescription = "Search", tint = Color.Gray) }
         )
 
         // Action Buttons Row
@@ -92,11 +97,19 @@ fun NewSaleScreen(navController: NavController) {
             ActionButton(icon = AppIcons.CameraAlt, label = "Image", onClick = {})
             ActionButton(icon = AppIcons.FilterList, label = "Filter", onClick = {})
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(
-                onClick = { showCart = true },
-                modifier = Modifier.background(White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+            BadgedBox(
+                badge = {
+                    if (state.cart.isNotEmpty()) {
+                        Badge { Text(state.cart.size.toString()) }
+                    }
+                }
             ) {
-                Icon(AppIcons.ShoppingCart, contentDescription = "Cart", tint = White)
+                IconButton(
+                    onClick = { showCart = true },
+                    modifier = Modifier.background(Color.Black.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(AppIcons.ShoppingCart, contentDescription = "Cart", tint = Color.Black)
+                }
             }
         }
 
@@ -106,10 +119,22 @@ fun NewSaleScreen(navController: NavController) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(products) { product ->
-                SaleProductItem(product = product)
+            items(state.products) { product ->
+                SaleProductItem(
+                    product = product,
+                    onAdd = { viewModel.onEvent(NewSaleEvent.AddToCart(product)) }
+                )
             }
         }
+    }
+
+    state.lastCompletedSale?.let { (sale, items) ->
+        ReceiptDialog(
+            sale = sale,
+            items = items,
+            products = state.products,
+            onDismiss = { viewModel.onEvent(NewSaleEvent.DismissReceipt) }
+        )
     }
 
     if (showCart) {
@@ -120,16 +145,131 @@ fun NewSaleScreen(navController: NavController) {
             dragHandle = null,
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
         ) {
-            CartModal()
+            CartModal(
+                state = state,
+                onEvent = viewModel::onEvent,
+                onClose = { showCart = false }
+            )
         }
     }
 }
 
 @Composable
-fun CartModal() {
-    var customerName by remember { mutableStateOf("Walk-in customer") }
-    var discount by remember { mutableStateOf(0) }
-    var selectedPayment by remember { mutableStateOf("Cash") }
+fun ReceiptDialog(
+    sale: SalesEntity,
+    items: List<SaleItemEntity>,
+    products: List<ProductDao.ProductWithStock> = emptyList(),
+    onDismiss: () -> Unit
+) {
+    val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+            ) {
+                Text("Print Receipt")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close", color = TextMuted)
+            }
+        },
+        containerColor = White,
+        title = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "DUKATRACK",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = PrimaryGreen
+                )
+                Text(
+                    "Sales Receipt",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMuted
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Receipt ID:", color = TextMuted)
+                    Text("#${sale.saleId}", fontWeight = FontWeight.Bold)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Date:", color = TextMuted)
+                    Text(dateFormatter.format(Date(sale.saleDate)))
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Customer:", color = TextMuted)
+                    Text(sale.customerName)
+                }
+                
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = BorderGray.copy(alpha = 0.5f))
+
+                items.forEach { item ->
+                    val productName = remember(item.productId) {
+                        products.find { it.productId == item.productId }?.name ?: "Product #${item.productId}"
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(productName, fontWeight = FontWeight.Medium)
+                            Text("${item.quantity} x KSh ${item.unitPrice}", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                        }
+                        Text("KSh ${item.totalAmount}", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = BorderGray.copy(alpha = 0.5f))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Total Amount", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("KSh ${sale.totalAmount}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PrimaryGreen)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Payment Method", color = TextMuted)
+                    Text(sale.paymentMethod ?: "Cash")
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun CartModal(
+    state: NewSaleState,
+    onEvent: (NewSaleEvent) -> Unit,
+    onClose: () -> Unit
+) {
+    val subtotal = state.cart.sumOf { it.total }
+    val total = subtotal * (1 - state.discount / 100.0)
 
     Column(
         modifier = Modifier
@@ -148,7 +288,7 @@ fun CartModal() {
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = TextDark
             )
-            TextButton(onClick = { /* Clear cart */ }) {
+            TextButton(onClick = { onEvent(NewSaleEvent.ClearCart) }) {
                 Text("Clear", color = RedColor, fontWeight = FontWeight.Bold)
             }
         }
@@ -156,13 +296,24 @@ fun CartModal() {
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = BorderGray.copy(alpha = 0.5f))
 
         // Cart Items area
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No items in cart", color = TextMuted)
+        if (state.cart.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No items in cart", color = TextMuted)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(state.cart) { item ->
+                    CartItemRow(item = item, onEvent = onEvent)
+                }
+            }
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = BorderGray.copy(alpha = 0.5f))
@@ -174,7 +325,7 @@ fun CartModal() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Subtotal", color = TextMuted, style = MaterialTheme.typography.bodyLarge)
-                Text("KSh 0", color = TextMuted, style = MaterialTheme.typography.bodyLarge)
+                Text("KSh ${"%.2f".format(subtotal)}", color = TextMuted, style = MaterialTheme.typography.bodyLarge)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -189,14 +340,14 @@ fun CartModal() {
                         .border(1.dp, BorderGray, RoundedCornerShape(8.dp))
                         .padding(horizontal = 12.dp, vertical = 4.dp)
                 ) {
-                    Text(discount.toString(), color = TextDark, style = MaterialTheme.typography.bodyLarge)
+                    Text(state.discount.toString(), color = TextDark, style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(
                         modifier = Modifier.padding(horizontal = 4.dp),
                         verticalArrangement = Arrangement.Center
                     ) {
                         IconButton(
-                            onClick = { discount++ },
+                            onClick = { if (state.discount < 100) onEvent(NewSaleEvent.DiscountChanged(state.discount + 1)) },
                             modifier = Modifier.size(16.dp)
                         ) {
                             Icon(
@@ -206,7 +357,7 @@ fun CartModal() {
                             )
                         }
                         IconButton(
-                            onClick = { if (discount > 0) discount-- },
+                            onClick = { if (state.discount > 0) onEvent(NewSaleEvent.DiscountChanged(state.discount - 1)) },
                             modifier = Modifier.size(16.dp)
                         ) {
                             Icon(
@@ -233,7 +384,7 @@ fun CartModal() {
                     color = TextDark
                 )
                 Text(
-                    "KSh 0",
+                    "KSh ${"%.2f".format(total)}",
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                     color = TextDark
                 )
@@ -259,16 +410,16 @@ fun CartModal() {
             PaymentMethodButton(
                 icon = AppIcons.CurrencyExchange,
                 label = "Cash",
-                isSelected = selectedPayment == "Cash",
+                isSelected = state.paymentMethod == "Cash",
                 modifier = Modifier.weight(1f),
-                onClick = { selectedPayment = "Cash" }
+                onClick = { onEvent(NewSaleEvent.PaymentMethodChanged("Cash")) }
             )
             PaymentMethodButton(
                 icon = AppIcons.PhoneAndroid,
                 label = "M-Pesa",
-                isSelected = selectedPayment == "M-Pesa",
+                isSelected = state.paymentMethod == "M-Pesa",
                 modifier = Modifier.weight(1f),
-                onClick = { selectedPayment = "M-Pesa" }
+                onClick = { onEvent(NewSaleEvent.PaymentMethodChanged("M-Pesa")) }
             )
         }
 
@@ -284,27 +435,66 @@ fun CartModal() {
             color = TextMuted
         )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = customerName,
-            onValueChange = { customerName = it },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = LightGrayBg,
-                unfocusedContainerColor = LightGrayBg,
-                focusedBorderColor = BorderGray,
-                unfocusedBorderColor = BorderGray,
-                focusedTextColor = TextDark,
-                unfocusedTextColor = TextDark
-            ),
-            textStyle = MaterialTheme.typography.bodyLarge
-        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = state.customerName,
+                onValueChange = { onEvent(NewSaleEvent.CustomerNameChanged(it)) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search or add customer") },
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = LightGrayBg,
+                    unfocusedContainerColor = LightGrayBg,
+                    focusedBorderColor = BorderGray,
+                    unfocusedBorderColor = BorderGray,
+                    focusedTextColor = TextDark,
+                    unfocusedTextColor = TextDark
+                ),
+                textStyle = MaterialTheme.typography.bodyLarge,
+                trailingIcon = {
+                    if (state.customerName.isNotEmpty() && state.customerName != "Walk-in customer") {
+                        IconButton(onClick = { onEvent(NewSaleEvent.CustomerNameChanged("Walk-in customer")) }) {
+                            Icon(AppIcons.Close, contentDescription = "Clear")
+                        }
+                    }
+                }
+            )
+
+            if (state.showCustomerSearch && state.customers.isNotEmpty()) {
+                DropdownMenu(
+                    expanded = true,
+                    onDismissRequest = { onEvent(NewSaleEvent.SetCustomerSearchVisibility(false)) },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(White)
+                ) {
+                    state.customers.forEach { customer ->
+                        DropdownMenuItem(
+                            text = {
+                                Column {
+                                    Text(customer.name, fontWeight = FontWeight.Bold)
+                                    customer.phoneNumber?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = TextMuted) }
+                                }
+                            },
+                            onClick = {
+                                onEvent(NewSaleEvent.CustomerNameChanged(customer.name))
+                                onEvent(NewSaleEvent.SetCustomerSearchVisibility(false))
+                            }
+                        )
+                    }
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // Complete Sale Button
         Button(
-            onClick = { /* Complete sale */ },
+            onClick = { 
+                onEvent(NewSaleEvent.Checkout)
+                onClose()
+            },
+            enabled = state.cart.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp),
@@ -320,6 +510,31 @@ fun CartModal() {
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun CartItemRow(item: CartItem, onEvent: (NewSaleEvent) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(item.name, fontWeight = FontWeight.Bold, color = TextDark)
+            Text("KSh ${item.price}", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { onEvent(NewSaleEvent.UpdateCartQuantity(item.id, item.quantity - 1)) }) {
+                Icon(AppIcons.Remove, contentDescription = null, tint = PrimaryGreen)
+            }
+            Text(item.quantity.toString(), fontWeight = FontWeight.Bold)
+            IconButton(onClick = { onEvent(NewSaleEvent.UpdateCartQuantity(item.id, item.quantity + 1)) }) {
+                Icon(AppIcons.Add, contentDescription = null, tint = PrimaryGreen)
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("KSh ${"%.2f".format(item.total)}", fontWeight = FontWeight.Bold, color = TextDark)
         }
     }
 }
@@ -387,7 +602,10 @@ fun ActionButton(
 }
 
 @Composable
-fun SaleProductItem(product: SaleProduct) {
+fun SaleProductItem(
+    product: ProductDao.ProductWithStock,
+    onAdd: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -408,17 +626,18 @@ fun SaleProductItem(product: SaleProduct) {
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = product.category,
+                        text = product.categoryName ?: "Uncategorized",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextMuted
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    val isLowStock = (product.stockQuantity ?: 0) <= (product.lowStockThreshold ?: 5)
                     Text(
-                        text = product.stock,
+                        text = "${product.stockQuantity ?: 0} in stock",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (product.isLowStock) RedColor else TextMuted
+                        color = if (isLowStock) RedColor else TextMuted
                     )
-                    if (product.isLowStock) {
+                    if (isLowStock) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = AppIcons.Warning,
@@ -426,25 +645,19 @@ fun SaleProductItem(product: SaleProduct) {
                             tint = RedColor,
                             modifier = Modifier.size(12.dp)
                         )
-                        Text(
-                            text = " Low",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = RedColor,
-                            fontWeight = FontWeight.Bold
-                        )
                     }
                 }
             }
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = product.price,
+                    text = "KSh ${product.sellingPrice ?: 0.0}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = PrimaryGreen
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
-                    onClick = { /* Add to Cart */ },
+                    onClick = onAdd,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -458,5 +671,3 @@ fun SaleProductItem(product: SaleProduct) {
         }
     }
 }
-// add receipt functionality
-

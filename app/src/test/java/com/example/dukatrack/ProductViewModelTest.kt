@@ -7,8 +7,11 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -29,7 +32,7 @@ class ProductViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { productDao.getAllCategories() } returns flowOf(emptyList())
-        every { productDao.searchProductsWithStock("") } returns flowOf(emptyList())
+        every { productDao.searchProductsWithStock(any()) } returns flowOf(emptyList())
         viewModel = ProductViewModel(productDao)
     }
 
@@ -41,10 +44,18 @@ class ProductViewModelTest {
     @Test
     fun `SearchQueryChanged event updates state`() = runTest {
         val query = "test query"
+        
+        // Start collecting the state to trigger the subscription
+        val collectJob = launch(UnconfinedTestDispatcher()) {
+            viewModel.state.collect {}
+        }
+
         viewModel.onEvent(ProductEvent.SearchQueryChanged(query))
         
         advanceUntilIdle()
         
         assertEquals(query, viewModel.state.value.searchQuery)
+        
+        collectJob.cancel()
     }
 }

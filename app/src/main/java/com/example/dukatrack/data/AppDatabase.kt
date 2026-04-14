@@ -15,7 +15,8 @@ import androidx.room.TypeConverters
         StockEntity::class,
         PurchasesEntity::class,
         SalesEntity::class,
-        SaleItemEntity::class
+        SaleItemEntity::class,
+        CustomerEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -25,6 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
     // We will add DAO getters here once we create them
     abstract fun productDao(): ProductDao
     abstract fun salesDao(): SalesDao
+    abstract fun customerDao(): CustomerDao
 
     companion object {
         @Volatile

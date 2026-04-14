@@ -27,4 +27,5 @@ sealed interface ProductEvent {
         val additionalInfo: String
     ) : ProductEvent
     data class AddCategory(val name: String) : ProductEvent
+    data class FilterCategory(val categoryId: Long) : ProductEvent
 }

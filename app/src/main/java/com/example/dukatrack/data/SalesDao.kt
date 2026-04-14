@@ -1,9 +1,11 @@
 package com.example.dukatrack.data
 
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -21,7 +23,21 @@ interface SalesDao {
     suspend fun insertSale(sale: SalesEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSaleItem(saleItem: SaleItemEntity)
+    suspend fun insertSaleItems(saleItems: List<SaleItemEntity>)
+
+    @Query("UPDATE stock SET quantity = quantity - :quantity WHERE productId = :productId")
+    suspend fun decreaseStock(productId: Long, quantity: Int)
+
+    @Transaction
+    suspend fun processSale(sale: SalesEntity, items: List<SaleItemEntity>): Long {
+        val saleId = insertSale(sale)
+        val itemsWithSaleId = items.map { it.copy(saleId = saleId) }
+        insertSaleItems(itemsWithSaleId)
+        items.forEach { item ->
+            decreaseStock(item.productId, item.quantity)
+        }
+        return saleId
+    }
 
     @Query(
     "SELECT p.productId, p.name, sum(si.totalAmount) as totalAmount " +
@@ -61,5 +77,17 @@ interface SalesDao {
     data class DailySales(
         val saleDate: Long,
         val totalSales: Double
+    )
+
+    @Query("""
+        SELECT s.*, (SELECT COUNT(*) FROM sale_items si WHERE si.saleId = s.saleId) as itemsCount 
+        FROM sales s 
+        ORDER BY s.saleDate DESC
+    """)
+    fun getAllSalesWithItemCount(): Flow<List<SaleWithItemCount>>
+
+    data class SaleWithItemCount(
+        @Embedded val sale: SalesEntity,
+        val itemsCount: Int
     )
 }

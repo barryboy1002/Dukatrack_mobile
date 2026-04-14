@@ -2,51 +2,29 @@ package com.example.dukatrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import com.example.dukatrack.ui.theme.PrimaryGreen
-import com.example.dukatrack.ui.theme.TextMuted
-import com.example.dukatrack.ui.theme.White
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.dukatrack.data.CategoryEntity
 import com.example.dukatrack.data.ProductDao
 import com.example.dukatrack.event.ProductEvent
-import com.example.dukatrack.ui.products.ProductViewModel
+import com.example.dukatrack.ui.theme.PrimaryGreen
 import kotlinx.coroutines.launch
 
 
@@ -54,7 +32,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProductsScreen(
     navController: NavController,
-    viewModel: ProductViewModel = viewModel()
+    viewModel: com.example.dukatrack.ui.products.ProductViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -67,17 +45,25 @@ fun ProductsScreen(
     // State for the dropdowns
     var showMoreMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
-    var showSortMenu by remember { mutableStateOf(false) }
+
+    var currentCategoryId by remember { mutableStateOf<Long?>(null) }
+
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
-    val filteredItems by remember(state.searchQuery, state.products) {
+    val filteredItems by remember(state.searchQuery, state.products, currentCategoryId) {
         derivedStateOf {
-            if (state.searchQuery.isEmpty()) {
+            val baseList = if (currentCategoryId == null) {
                 state.products
             } else {
-                state.products.filter { it.name.contains(state.searchQuery, ignoreCase = true) }
+                state.products.filter { it.categoryId == currentCategoryId }
+            }
+
+            if (state.searchQuery.isEmpty()) {
+                baseList
+            } else {
+                baseList.filter { it.name.contains(state.searchQuery, ignoreCase = true) }
             }
         }
     }
@@ -90,19 +76,12 @@ fun ProductsScreen(
             query = state.searchQuery,
             onQueryChange = { viewModel.onEvent(ProductEvent.SearchQueryChanged(it)) },
             onSearch = { /* Handle search submission */ },
-            placeholder = { Text("Search products...", color = Color.White.copy(alpha = 0.6f)) },
+            placeholder = { Text("Search products...", color = Color.Black.copy(alpha = 0.4f)) },
             leadingIcon = {
                 Icon(
                     AppIcons.Search,
                     contentDescription = "Search",
-                    tint = Color.White.copy(alpha = 0.6f)
-                )
-            },
-            trailingIcon = {
-                Icon(
-                    AppIcons.MoreVert,
-                    contentDescription = "More options",
-                    tint = Color.White.copy(alpha = 0.6f)
+                    tint = Color.Black.copy(alpha = 0.4f)
                 )
             }
         )
@@ -116,16 +95,27 @@ fun ProductsScreen(
             // Filter Dropdown
             Box {
                 Surface(
-                    color = Color.White.copy(alpha = 0.1f),
+                    color = Color.White.copy(alpha = 0.05f),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.clickable { showFilterMenu = true }
                 ) {
-                    Text(
-                        text = "Filter",
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.FilterList,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (currentCategoryId == null) "Filter" else state.categories.find { it.id == currentCategoryId }?.name ?: "Filter",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
                 DropdownMenu(
                     expanded = showFilterMenu,
@@ -134,46 +124,24 @@ fun ProductsScreen(
                 ) {
                     DropdownMenuItem(
                         text = { Text("All Categories", color = Color.Black) },
-                        onClick = { showFilterMenu = false }
+                        onClick = { 
+                            currentCategoryId = null
+                            showFilterMenu = false 
+                        }
                     )
                     state.categories.forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name, color = Color.Black) },
-                            onClick = { showFilterMenu = false }
+                            onClick = { 
+                                currentCategoryId = category.id
+                                showFilterMenu = false
+                            }
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
 
-            // Sort Dropdown
-            Box {
-                Surface(
-                    color = Color.White.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.clickable { showSortMenu = true }
-                ) {
-                    Text(
-                        text = "Sort",
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                DropdownMenu(
-                    expanded = showSortMenu,
-                    onDismissRequest = { showSortMenu = false },
-                    modifier = Modifier.background(White)
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Ascending", color = Color.Black) },
-                        onClick = { showSortMenu = false })
-                    DropdownMenuItem(
-                        text = { Text("Descending", color = Color.Black) },
-                        onClick = { showSortMenu = false })
-                }
-            }
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -222,10 +190,12 @@ fun ProductsScreen(
         ) {
             items(count = filteredItems.size) { index ->
                 val product = filteredItems[index]
+                val isLowStock = (product.stockQuantity ?: 0) <= (product.lowStockThreshold ?: 5)
                 ProductListItem(
                     itemName = product.name,
                     itemDescription = if ((product.stockQuantity ?: 0) <= 0) "Out of Stock" else "Stock: ${product.stockQuantity}",
                     itemPrice = "Ksh ${product.sellingPrice ?: 0}",
+                    isLowStock = isLowStock,
                     onClick = {
                         selectedProduct = product
                         isEditing = true
@@ -312,13 +282,12 @@ fun CategoryDialog(
         title = { Text("Manage Category", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("Enter category name", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
-                Spacer(modifier = Modifier.height(16.dp))
-                EditField(
-                    label = "NAME", 
-                    value = categoryName, 
+                OutlinedTextField(
+                    value = categoryName,
                     onValueChange = { categoryName = it },
-                    placeholder = "e.g. Beverages"
+                    label = { Text("Category Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -327,173 +296,142 @@ fun CategoryDialog(
                 onClick = { onAdd(categoryName) },
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text("Save")
+                Text("Add")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextMuted)
+                Text("Cancel", color = Color.Gray)
             }
-        },
-        containerColor = White,
-        shape = RoundedCornerShape(16.dp)
+        }
     )
 }
 
 @Composable
 fun ProductFormSheet(
     title: String,
-    product: ProductDao.ProductWithStock?,
+    product: ProductDao.ProductWithStock? = null,
     categories: List<CategoryEntity>,
     onSave: (String, Long, Double, Double, String, String, Int, Int, String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(product?.name ?: "") }
-    var selectedCategoryId by remember { mutableStateOf(product?.categoryId ?: (if (categories.isNotEmpty()) categories[0].id else 0L)) }
+    var categoryId by remember { mutableStateOf(product?.categoryId ?: (categories.firstOrNull()?.id ?: 0L)) }
     var buyingPrice by remember { mutableStateOf(product?.buyingPrice?.toString() ?: "") }
     var sellingPrice by remember { mutableStateOf(product?.sellingPrice?.toString() ?: "") }
     var unit by remember { mutableStateOf(product?.units ?: "") }
     var brand by remember { mutableStateOf(product?.brand ?: "") }
-    var lowStockAlert by remember { mutableStateOf(product?.lowStockThreshold?.toString() ?: "10") }
+    var lowStockAlert by remember { mutableStateOf(product?.lowStockThreshold?.toString() ?: "5") }
     var initialStock by remember { mutableStateOf(product?.stockQuantity?.toString() ?: "0") }
-    var additionalInfo by remember { mutableStateOf(product?.additionalInfo ?: "") }
+    var additionalInfo by remember { mutableStateOf(product?.description ?: "") }
 
-    var categoryExpanded by remember { mutableStateOf(false) }
-    
-    val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Select Category"
+    var expandedCategory by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
+            .padding(16.dp)
+            .padding(bottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding())
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-            )
+            Text(text = title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             IconButton(onClick = onDismiss) {
-                Icon(AppIcons.Close, contentDescription = "Close", tint = TextMuted)
+                Icon(AppIcons.Close, contentDescription = "Close")
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        EditField(label = "PRODUCT NAME *", value = name, onValueChange = { name = it })
-        
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Category Dropdown
-            Column(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
-                Text(
-                    text = "CATEGORY",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
-                    color = TextMuted
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Box {
-                    OutlinedTextField(
-                        value = selectedCategoryName,
-                        onValueChange = {},
-                        readOnly = true,
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
+                EditField("Product Name", name, { name = it })
+            }
+            item {
+                Text("Category", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedCard(
+                        onClick = { expandedCategory = true },
                         modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = { Icon(AppIcons.ArrowDropDown, contentDescription = null) },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryGreen,
-                            unfocusedBorderColor = Color(0xFFE5E7EB),
-                            focusedContainerColor = White,
-                            unfocusedContainerColor = White
-                        )
-                    )
-                    // Transparent layer to capture click for dropdown
-                    Box(modifier = Modifier.matchParentSize().clickable { categoryExpanded = true })
-                    
-                    DropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false },
-                        modifier = Modifier.fillMaxWidth(0.45f)
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        categories.forEach { cat ->
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = categories.find { it.id == categoryId }?.name ?: "Select Category",
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(AppIcons.ArrowDropDown, contentDescription = null)
+                        }
+                    }
+                    DropdownMenu(
+                        expanded = expandedCategory,
+                        onDismissRequest = { expandedCategory = false },
+                        modifier = Modifier.fillMaxWidth(0.9f).background(White)
+                    ) {
+                        categories.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(cat.name) },
+                                text = { Text(category.name, color = Color.Black) },
                                 onClick = {
-                                    selectedCategoryId = cat.id
-                                    categoryExpanded = false
+                                    categoryId = category.id
+                                    expandedCategory = false
                                 }
                             )
                         }
                     }
                 }
             }
-            EditField(modifier = Modifier.weight(1f), label = "BRAND", value = brand, onValueChange = { brand = it }, placeholder = "Optional")
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            EditField(
-                modifier = Modifier.weight(1f), 
-                label = "BUYING PRICE (KSH) *", 
-                value = buyingPrice, 
-                onValueChange = { buyingPrice = it },
-                keyboardType = KeyboardType.Number
-            )
-            EditField(
-                modifier = Modifier.weight(1f), 
-                label = "SELLING PRICE (KSH) *", 
-                value = sellingPrice, 
-                onValueChange = { sellingPrice = it },
-                keyboardType = KeyboardType.Number
-            )
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            EditField(modifier = Modifier.weight(1f), label = "UNIT", value = unit, onValueChange = { unit = it })
-            EditField(modifier = Modifier.weight(1f), label = "LOW STOCK ALERT AT", value = lowStockAlert, onValueChange = { lowStockAlert = it }, keyboardType = KeyboardType.Number)
-        }
-
-        if (product == null) {
-            EditField(label = "INITIAL STOCK QUANTITY", value = initialStock, onValueChange = { initialStock = it }, keyboardType = KeyboardType.Number)
-        }
-
-        EditField(label = "ADDITIONAL INFO", value = additionalInfo, onValueChange = { additionalInfo = it }, placeholder = "Purpose, usage notes, etc.", singleLine = false, minLines = 3)
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextMuted)
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    EditField("Buying Price", buyingPrice, { buyingPrice = it }, Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+                    EditField("Selling Price", sellingPrice, { sellingPrice = it }, Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+                }
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Button(
-                onClick = {
-                    onSave(
-                        name,
-                        selectedCategoryId,
-                        buyingPrice.toDoubleOrNull() ?: 0.0,
-                        sellingPrice.toDoubleOrNull() ?: 0.0,
-                        unit,
-                        brand,
-                        lowStockAlert.toIntOrNull() ?: 10,
-                        initialStock.toIntOrNull() ?: 0,
-                        additionalInfo
-                    )
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
-                shape = RoundedCornerShape(8.dp),
-                enabled = name.isNotBlank() && buyingPrice.isNotBlank() && sellingPrice.isNotBlank()
-            ) {
-                Text("Save Product", color = White)
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    EditField("Unit (e.g., kg, pcs)", unit, { unit = it }, Modifier.weight(1f))
+                    EditField("Brand", brand, { brand = it }, Modifier.weight(1f))
+                }
+            }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    EditField("Low Stock Alert", lowStockAlert, { lowStockAlert = it }, Modifier.weight(1f), keyboardType = KeyboardType.Number)
+                    if (product == null) {
+                        EditField("Initial Stock", initialStock, { initialStock = it }, Modifier.weight(1f), keyboardType = KeyboardType.Number)
+                    }
+                }
+            }
+            item {
+                EditField("Additional Info", additionalInfo, { additionalInfo = it }, isSingleLine = false)
+            }
+            item {
+                Button(
+                    onClick = {
+                        onSave(
+                            name,
+                            categoryId,
+                            buyingPrice.toDoubleOrNull() ?: 0.0,
+                            sellingPrice.toDoubleOrNull() ?: 0.0,
+                            unit,
+                            brand,
+                            lowStockAlert.toIntOrNull() ?: 5,
+                            initialStock.toIntOrNull() ?: 0,
+                            additionalInfo
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+                ) {
+                    Text("Save Product", modifier = Modifier.padding(8.dp))
+                }
             }
         }
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -504,114 +442,82 @@ fun EditField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "",
-    singleLine: Boolean = true,
-    minLines: Int = 1,
+    isSingleLine: Boolean = true,
+    maxLines: Int = 3,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    Column(modifier = modifier.padding(vertical = 8.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
-            ),
-            color = TextMuted
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+    Column(modifier = modifier) {
+        Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
         OutlinedTextField(
             value = value,
-            onValueChange = { input ->
-                // Basic numeric validation if needed
-                if (keyboardType == KeyboardType.Number) {
-                    if (input.isEmpty() || input.all { it.isDigit() || it == '.' }) {
-                        onValueChange(input)
-                    }
-                } else {
-                    onValueChange(input)
-                }
-            },
+            onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(placeholder, color = TextMuted.copy(alpha = 0.5f)) },
-            singleLine = singleLine,
-            minLines = minLines,
+            placeholder = { Text(placeholder) },
+            singleLine = isSingleLine,
+            maxLines = if (isSingleLine) 1 else maxLines,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            textStyle = TextStyle(fontSize = 14.sp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PrimaryGreen,
-                unfocusedBorderColor = Color(0xFFE5E7EB),
-                focusedContainerColor = White,
-                unfocusedContainerColor = White
-            ),
             shape = RoundedCornerShape(8.dp)
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductSearchBar(
-    query : String,
-    onQueryChange : (String) -> Unit,
+    query: String,
+    onQueryChange: (String) -> Unit,
     onSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder : @Composable () -> Unit = {Text("Search Products")},
-    leadingIcon : @Composable (()-> Unit)? = {Icon(AppIcons.Search, contentDescription = "Search bar")},
-    trailingIcon: @Composable (() -> Unit)? = null,
-    ){
-    Box(
+    placeholder: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null
+) {
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp,vertical = 8.dp)
-            .semantics{isTraversalGroup = true},
-    ){
-        val containerColor = Color.White.copy(alpha = 0.15f)
-        SearchBar(
+            .height(88.dp),
+        shadowElevation = 2.dp
+    ) {
+        Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .semantics{traversalIndex = 0f}
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            colors = SearchBarDefaults.colors(
-                containerColor = containerColor,
-            ),
-            inputField = {
-                SearchBarDefaults.InputField(
-                    query = query,
-                    onQueryChange = onQueryChange,
-                    onSearch = {
-                        onSearch(query)
-                    },
-                    expanded = false,
-                    onExpandedChange = { },
-                    placeholder = placeholder,
-                    leadingIcon = leadingIcon,
-                    trailingIcon = {
-                        if (query.isNotEmpty()) {
-                            IconButton(onClick = { onQueryChange("") }) {
-                                Icon(AppIcons.Close, contentDescription = "Clear search")
-                            }
-                        } else {
-                            trailingIcon?.invoke()
-                        }
-                    },
-                    colors = SearchBarDefaults.inputFieldColors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedPlaceholderColor = Color.LightGray,
-                        unfocusedPlaceholderColor = Color.LightGray,
-                        focusedLeadingIconColor = Color.White,
-                        unfocusedLeadingIconColor = Color.White,
-                        focusedTrailingIconColor = Color.White,
-                        unfocusedTrailingIconColor = Color.White
-                    )
-
-                )
-            },
-            shape = RoundedCornerShape(8.dp),
-            expanded = false,
-            onExpandedChange = { },
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
         ) {
-            // Content is empty to avoid showing a separate suggestion list
+            TextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = placeholder,
+                leadingIcon = leadingIcon,
+                trailingIcon = if (query.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(
+                                imageVector = AppIcons.Close,
+                                contentDescription = "Clear search",
+                                tint = Color.Black.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                } else {
+                    trailingIcon
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Black.copy(alpha = 0.05f),
+                    unfocusedContainerColor = Color.Black.copy(alpha = 0.05f),
+                    disabledContainerColor = Color.Transparent,
+                    cursorColor = PrimaryGreen,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedPlaceholderColor = Color.Black.copy(alpha = 0.4f),
+                    unfocusedPlaceholderColor = Color.Black.copy(alpha = 0.4f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
         }
     }
 }
@@ -623,8 +529,10 @@ fun ProductListItem(
     itemDescription:String,
     itemPrice:String,
     modifier: Modifier = Modifier,
+    isLowStock: Boolean = false,
     onClick: () -> Unit = {}
 ){
+    val statusColor = if (isLowStock) Color.Red else PrimaryGreen
     Surface(modifier = Modifier.clickable(onClick = onClick).fillMaxWidth(),
         color = Color.White.copy(alpha = 1f),
         shape = RoundedCornerShape(8.dp)){
@@ -638,12 +546,12 @@ fun ProductListItem(
                     color = PrimaryGreen)
             }
             Surface(
-                color = PrimaryGreen.copy(alpha = 0.1f),
+                color = statusColor.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(4.dp)){
                     Text(text = itemDescription,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium,
-                        color = PrimaryGreen
+                        color = statusColor
                     )
             }
         }

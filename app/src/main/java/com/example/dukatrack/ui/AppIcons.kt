@@ -32,6 +32,35 @@ object AppIcons {
     val CheckCircle = Icons.Default.CheckCircle
     val MoreVert = Icons.Default.MoreVert
     val Star = Icons.Default.Star
+    val AddCircleOutline = Icons.Default.AddCircle
+    
+    val RemoveCircleOutline = materialIcon("RemoveCircleOutline") {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(12.0f, 2.0f)
+            curveTo(6.48f, 2.0f, 2.0f, 6.48f, 2.0f, 12.0f)
+            reflectiveCurveTo(6.48f, 22.0f, 12.0f, 22.0f)
+            reflectiveCurveTo(22.0f, 17.52f, 22.0f, 12.0f)
+            reflectiveCurveTo(17.52f, 2.0f, 12.0f, 2.0f)
+            close()
+            moveTo(17.0f, 13.0f)
+            horizontalLineTo(7.0f)
+            verticalLineTo(11.0f)
+            horizontalLineTo(17.0f)
+            verticalLineTo(13.0f)
+            close()
+        }
+    }
+    
+    val Remove = materialIcon("Remove") {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(19.0f, 13.0f)
+            horizontalLineTo(5.0f)
+            verticalLineTo(11.0f)
+            horizontalLineTo(19.0f)
+            verticalLineTo(13.0f)
+            close()
+        }
+    }
 
     // Custom Defined Icons (Professional replacements for Extended Library)
     val Storefront = materialIcon("Storefront") {
@@ -151,7 +180,7 @@ object AppIcons {
             close()
             moveTo(9.0f, 17.0f)
             horizontalLineTo(7.0f)
-            verticalLineToRelative(-7.0f)
+            verticalLineTo(-7.0f)
             horizontalLineToRelative(2.0f)
             verticalLineTo(17.0f)
             close()

@@ -54,6 +54,10 @@ class ProductViewModel(private val productDao: ProductDao) : ViewModel() {
             is ProductEvent.AddCategory -> {
                 addCategory(event.name)
             }
+            is ProductEvent.FilterCategory ->{
+                filterCategory(event.categoryId)
+
+            }
         }
     }
 
@@ -104,4 +108,10 @@ class ProductViewModel(private val productDao: ProductDao) : ViewModel() {
             productDao.insertCategory(CategoryEntity(name = name))
         }
     }
+    private fun filterCategory(categoryId: Long) {
+        viewModelScope.launch {
+            productDao.getProductsByCategory(categoryId)
+        }
+    }
+
 }
