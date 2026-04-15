@@ -1,5 +1,7 @@
 package com.example.dukatrack.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,8 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.font.FontWeight
@@ -25,8 +26,8 @@ import com.example.dukatrack.data.CategoryEntity
 import com.example.dukatrack.data.ProductDao
 import com.example.dukatrack.event.ProductEvent
 import com.example.dukatrack.ui.theme.PrimaryGreen
+import com.example.dukatrack.ui.theme.White
 import kotlinx.coroutines.launch
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +36,6 @@ fun ProductsScreen(
     viewModel: com.example.dukatrack.ui.products.ProductViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     var showProductSheet by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf<ProductDao.ProductWithStock?>(null) }
     var isEditing by remember { mutableStateOf(false) }
@@ -45,6 +45,11 @@ fun ProductsScreen(
     // State for the dropdowns
     var showMoreMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
+    var showProDialog by remember { mutableStateOf(false) }
+
+    if (showProDialog) {
+        ProFeatureDialog(onDismiss = { showProDialog = false })
+    }
 
     var currentCategoryId by remember { mutableStateOf<Long?>(null) }
 
@@ -173,6 +178,13 @@ fun ProductsScreen(
                         onClick = {
                             showMoreMenu = false
                             showCategoryDialog = true
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Bulk Import (Pro)", color = Color.Black) },
+                        onClick = {
+                            showMoreMenu = false
+                            showProDialog = true
                         }
                     )
                 }
@@ -316,7 +328,19 @@ fun ProductFormSheet(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(product?.name ?: "") }
-    var categoryId by remember { mutableStateOf(product?.categoryId ?: (categories.firstOrNull()?.id ?: 0L)) }
+    var categoryId by remember { 
+        mutableStateOf(
+            product?.categoryId ?: (categories.find { it.name == "General" }?.id ?: categories.firstOrNull()?.id ?: 0L)
+        )
+    }
+    
+    // Update categoryId when categories are loaded if it was 0
+    LaunchedEffect(categories) {
+        if (categoryId == 0L && categories.isNotEmpty()) {
+            categoryId = categories.find { it.name == "General" }?.id ?: categories.first().id
+        }
+    }
+
     var buyingPrice by remember { mutableStateOf(product?.buyingPrice?.toString() ?: "") }
     var sellingPrice by remember { mutableStateOf(product?.sellingPrice?.toString() ?: "") }
     var unit by remember { mutableStateOf(product?.units ?: "") }
@@ -326,6 +350,11 @@ fun ProductFormSheet(
     var additionalInfo by remember { mutableStateOf(product?.description ?: "") }
 
     var expandedCategory by remember { mutableStateOf(false) }
+    var showProDialog by remember { mutableStateOf(false) }
+
+    if (showProDialog) {
+        ProFeatureDialog(onDismiss = { showProDialog = false })
+    }
 
     Column(
         modifier = Modifier
@@ -396,6 +425,17 @@ fun ProductFormSheet(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     EditField("Unit (e.g., kg, pcs)", unit, { unit = it }, Modifier.weight(1f))
                     EditField("Brand", brand, { brand = it }, Modifier.weight(1f))
+                }
+            }
+            item {
+                Button(
+                    onClick = { showProDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black.copy(alpha = 0.05f))
+                ) {
+                    Icon(AppIcons.CameraAlt, contentDescription = null, tint = Color.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add Product Image (Pro)", color = Color.Black)
                 }
             }
             item {

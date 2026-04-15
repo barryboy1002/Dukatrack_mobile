@@ -13,9 +13,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ProductViewModel(private val productDao: ProductDao) : ViewModel() {
+
+    init {
+        ensureDefaultCategory()
+    }
+
+    private fun ensureDefaultCategory() {
+        viewModelScope.launch {
+            val categories = productDao.getAllCategories().first()
+            if (categories.isEmpty()) {
+                productDao.insertCategory(CategoryEntity(name = "General"))
+            }
+        }
+    }
 
     private val _searchQuery = MutableStateFlow("")
     

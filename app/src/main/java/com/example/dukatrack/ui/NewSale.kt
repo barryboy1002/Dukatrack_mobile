@@ -1,5 +1,7 @@
 package com.example.dukatrack.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,11 +73,17 @@ fun NewSaleScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var showCart by remember { mutableStateOf(false) }
+    var showProDialog by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    if (showProDialog) {
+        ProFeatureDialog(onDismiss = { showProDialog = false })
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(PrimaryGreen)
     ) {
         // Search Bar
         ProductSearchBar(
@@ -93,8 +102,16 @@ fun NewSaleScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ActionButton(icon = AppIcons.QrCodeScanner, label = "Barcode", onClick = {})
-            ActionButton(icon = AppIcons.CameraAlt, label = "Image", onClick = {})
+            ActionButton(
+                icon = AppIcons.QrCodeScanner,
+                label = "Barcode",
+                onClick = { showProDialog = true }
+            )
+            ActionButton(
+                icon = AppIcons.CameraAlt,
+                label = "Image",
+                onClick = { showProDialog = true }
+            )
             ActionButton(icon = AppIcons.FilterList, label = "Filter", onClick = {})
             Spacer(modifier = Modifier.weight(1f))
             BadgedBox(
@@ -106,24 +123,30 @@ fun NewSaleScreen(
             ) {
                 IconButton(
                     onClick = { showCart = true },
-                    modifier = Modifier.background(Color.Black.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                    modifier = Modifier.background(White.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
                 ) {
-                    Icon(AppIcons.ShoppingCart, contentDescription = "Cart", tint = Color.Black)
+                    Icon(AppIcons.ShoppingCart, contentDescription = "Cart", tint = White)
                 }
             }
         }
 
-        // Products List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        // Products List (With white background)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(LightGrayBg, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
         ) {
-            items(state.products) { product ->
-                SaleProductItem(
-                    product = product,
-                    onAdd = { viewModel.onEvent(NewSaleEvent.AddToCart(product)) }
-                )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(state.products) { product ->
+                    SaleProductItem(
+                        product = product,
+                        onAdd = { viewModel.onEvent(NewSaleEvent.AddToCart(product)) }
+                    )
+                }
             }
         }
     }
@@ -161,16 +184,23 @@ fun ReceiptDialog(
     products: List<ProductDao.ProductWithStock> = emptyList(),
     onDismiss: () -> Unit
 ) {
+    var showProDialog by remember { mutableStateOf(false) }
     val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()) }
+
+    if (showProDialog) {
+        ProFeatureDialog(onDismiss = { showProDialog = false })
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(
-                onClick = onDismiss,
+                onClick = { showProDialog = true },
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text("Print Receipt")
+                Icon(AppIcons.Print, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Print Receipt (Pro)")
             }
         },
         dismissButton = {

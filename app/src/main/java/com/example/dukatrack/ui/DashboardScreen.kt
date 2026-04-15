@@ -1,40 +1,17 @@
 package com.example.dukatrack.ui
 
-
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +22,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,23 +32,25 @@ import com.example.dukatrack.event.DashboardEvent
 import com.example.dukatrack.state.ChartTab
 import com.example.dukatrack.state.DashboardState
 import com.example.dukatrack.state.period
-import com.example.dukatrack.ui.theme.BorderGray
-import com.example.dukatrack.ui.theme.DarkNavy
-import com.example.dukatrack.ui.theme.PrimaryGreen
-import com.example.dukatrack.ui.theme.RedColor
-import com.example.dukatrack.ui.theme.TextDark
-import com.example.dukatrack.ui.theme.TextMuted
-import com.example.dukatrack.ui.theme.White
-import com.example.dukatrack.ui.theme.pchartcolors
+import com.example.dukatrack.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
-fun DashboardScreen(navController: NavController,
-                    state : DashboardState,
-                    onEvent: (DashboardEvent) -> Unit,
-                    modifier: Modifier = Modifier) {
+fun DashboardScreen(
+    navController: NavController,
+    state: DashboardState,
+    onEvent: (DashboardEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showProDialog by remember { mutableStateOf(false) }
+
+    if (showProDialog) {
+        ProFeatureDialog(onDismiss = { showProDialog = false })
+    }
 
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -79,10 +59,19 @@ fun DashboardScreen(navController: NavController,
             SummaryCardsGrid(state)
         }
         item {
-            SalesChartCard(state,onEvent)
+            SalesChartCard(state, onEvent)
         }
         item {
             TopProductsCard(state)
+        }
+        item {
+            Button(
+                onClick = { showProDialog = true },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+            ) {
+                Text("Upgrade to Pro for Barcode & Images")
+            }
         }
     }
 }
@@ -90,58 +79,61 @@ fun DashboardScreen(navController: NavController,
 @Composable
 fun SidebarContent(navController: NavController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentRoute = navBackStackEntry?.destination?.route ?: screen_names.Dashboard
+    var showProDialog by remember { mutableStateOf(false) }
+
+    if (showProDialog) {
+        ProFeatureDialog(onDismiss = { showProDialog = false })
+    }
 
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .background(DarkNavy)
+            .padding(vertical = 24.dp)
     ) {
-        // Logo Section
+        // Logo or App Name
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier.padding(horizontal = 24.dp)
         ) {
-            Icon(
-                imageVector = AppIcons.Storefront,
-                contentDescription = "Logo",
-                tint = PrimaryGreen,
-                modifier = Modifier.size(28.dp)
-            )
+            Surface(
+                color = PrimaryGreen,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = AppIcons.Storefront,
+                        contentDescription = null,
+                        tint = White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 "DukaTrack",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                ),
-                color = White
+                color = White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
         }
 
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            thickness = 0.5.dp,
-            color = White.copy(alpha = 0.1f)
-        )
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Nav Items
+        // Navigation Items
         Column(
             modifier = Modifier
-                .padding(horizontal = 12.dp)
                 .weight(1f)
+                .padding(horizontal = 12.dp)
         ) {
             SidebarItem(
                 label = "Dashboard",
-                icon = AppIcons.GridView,
+                icon = AppIcons.Storefront,
                 isSelected = currentRoute == screen_names.Dashboard,
                 onClick = {
                     if (currentRoute != screen_names.Dashboard) {
-                        navController.navigate(screen_names.Dashboard) {
-                            popUpTo(screen_names.Dashboard) { inclusive = true }
-                        }
+                        navController.navigate(screen_names.Dashboard)
                     }
                 }
             )
@@ -174,21 +166,24 @@ fun SidebarContent(navController: NavController) {
                     }
                 }
             )
-            SidebarItem("Stock", AppIcons.Layers)
-            SidebarItem("Suppliers", AppIcons.LocalShipping)
-            SidebarItem("Reports", AppIcons.Assessment)
-            SidebarItem("Settings", AppIcons.Settings)
+            SidebarItem(
+                label = "Stock",
+                icon = AppIcons.Layers,
+                onClick = { showProDialog = true }
+            )
+            SidebarItem(
+                label = "Suppliers",
+                icon = AppIcons.LocalShipping,
+                onClick = { showProDialog = true }
+            )
+            SidebarItem(
+                label = "Reports",
+                icon = AppIcons.Assessment,
+                onClick = { showProDialog = true }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider(thickness = 0.5.dp, color = White.copy(alpha = 0.1f))
-            Spacer(modifier = Modifier.height(8.dp))
-
-            SidebarItem(
-                label = "Logout",
-                icon = AppIcons.Logout,
-                textColor = RedColor,
-                iconColor = RedColor
-            )
         }
 
         // Bottom section
@@ -206,32 +201,6 @@ fun SidebarContent(navController: NavController) {
                     color = PrimaryGreen,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // User Info
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = CircleShape,
-                    color = White.copy(alpha = 0.2f),
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            "WK",
-                            color = White,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    "Wanjiku Kamau",
-                    color = White,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
             }
         }
@@ -270,7 +239,8 @@ fun SidebarItem(
                 text = label,
                 color = if (isSelected) White else textColor,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                maxLines = 1
             )
         }
     }
@@ -430,7 +400,7 @@ fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
 
                         DropdownMenu(
                             expanded = state.showMenu,
-                            onDismissRequest = { state.showMenu = false },
+                            onDismissRequest = { onEvent(DashboardEvent.ToggleMenu) },
                             modifier = Modifier
                                 .widthIn(min = 100.dp)
                                 .background(White)
@@ -574,6 +544,12 @@ fun SalesChartCard(state: DashboardState, onEvent: (DashboardEvent) -> Unit) {
 
 @Composable
 fun Areachart(data: Map<String, Float>, modifier: Modifier = Modifier) {
+    if (data.isEmpty()) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            Text("No sales data for this period", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+        }
+        return
+    }
     val values = data.values.toList()
     val graphColor = PrimaryGreen
     val transparentGraphColor = PrimaryGreen.copy(alpha = 0.2f)
@@ -676,10 +652,17 @@ fun chartTab(
 
 @Composable
 fun ProductsChart(data : Map<String,Float>, modifier: Modifier = Modifier) {
+    if (data.isEmpty()) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            Text("No data available", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+        }
+        return
+    }
     val values = data.values.toList()
     val totalvalues =  values.sum()
 
     Canvas(modifier = modifier) {
+        if (totalvalues <= 0f) return@Canvas
         val canvasSize = size.minDimension
         var currentStartAngle = -90f
 
@@ -713,46 +696,52 @@ fun TopProductsCard(state: DashboardState,modifier: Modifier = Modifier){
         border = BorderStroke(1.dp, BorderGray),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ){
-        Column(modifier = Modifier.padding(20.dp)){
-            Text(text = "Top Products",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp)
-            Spacer(modifier = Modifier.height(16.dp))
-            productsList.forEachIndexed { index, (product, value) ->
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Text(text = " #${index+1}",
-                        color = PrimaryGreen,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.width(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(2f)){
-                        Text(text = product,
-                            fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = TextDark
+        if (productsList.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
+                Text("No top products yet", color = TextMuted)
+            }
+        } else {
+            Column(modifier = Modifier.padding(20.dp)){
+                Text(text = "Top Products",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                productsList.forEachIndexed { index, (product, value) ->
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Text(text = " #${index+1}",
+                            color = PrimaryGreen,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.width(32.dp)
                         )
-                        Text(text = "$value%",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = PrimaryGreen
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(2f)){
+                            Text(text = product,
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = TextDark
+                            )
+                            Text(text = "$value%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = PrimaryGreen
+                            )
+                        }
+                        Icon(
+                            imageVector = AppIcons.ChevronRight,
+                            contentDescription = null,
+                            tint = BorderGray,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    Icon(
-                        imageVector = AppIcons.ChevronRight,
-                        contentDescription = null,
-                        tint = BorderGray,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                if (index < productsList.size - 1) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        thickness = 1.dp,
-                        color = BorderGray.copy(alpha = 0.5f)
-                    )
+                    if (index < productsList.size - 1) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                            thickness = 1.dp,
+                            color = BorderGray.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }

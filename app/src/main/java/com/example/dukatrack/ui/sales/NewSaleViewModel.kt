@@ -3,6 +3,7 @@ package com.example.dukatrack.ui.sales
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dukatrack.data.CustomerDao
+import com.example.dukatrack.data.CustomerEntity
 import com.example.dukatrack.data.ProductDao
 import com.example.dukatrack.data.SalesDao
 import com.example.dukatrack.data.SalesEntity
@@ -10,6 +11,7 @@ import com.example.dukatrack.data.SaleItemEntity
 import com.example.dukatrack.event.NewSaleEvent
 import com.example.dukatrack.state.CartItem
 import com.example.dukatrack.state.NewSaleState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NewSaleViewModel(
     private val productDao: ProductDao,
     private val salesDao: SalesDao,
@@ -62,7 +65,7 @@ class NewSaleViewModel(
             discount = args[4] as Int,
             paymentMethod = args[5] as String,
             lastCompletedSale = args[6] as Pair<SalesEntity, List<SaleItemEntity>>?,
-            customers = args[7] as List<com.example.dukatrack.data.CustomerEntity>,
+            customers = args[7] as List<CustomerEntity>,
             showCustomerSearch = args[8] as Boolean
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NewSaleState())

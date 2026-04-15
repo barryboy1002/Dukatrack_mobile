@@ -216,6 +216,7 @@ object AppIcons {
     val GridView = Icons.Default.Menu
     val QrCodeScanner = Icons.Default.Search
     val CurrencyExchange = ShoppingCart
+    val Print = Icons.Default.Share
 
     private inline fun materialIcon(
         name: String,
