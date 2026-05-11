@@ -2,7 +2,7 @@
 
 Dukatrack is a lightweight, offline-first Point of Sale (POS) system designed for small businesses to manage sales and products efficiently. Built with modern Android technologies, it provides a fast and reliable experience for local retail operations.
 
-## 🚀 Features
+##  Features
 
 ### Free Tier (Mobile)
 - **Product Management**: Create and organize products with categories.
@@ -23,7 +23,7 @@ The mobile app serves as a gateway to the **Dukatrack Desktop Pro** version. Adv
 - **Barcode Support**: Speed up checkout with scanners.
 - **Printing**: Official thermal receipt printing support.
 
-## 🛠 Tech Stack
+##Tech Stack
 - **Language**: [Kotlin](https://kotlinlang.org/)
 - **UI Framework**: [Jetpack Compose](https://developer.android.com/jetpack/compose)
 - **Database**: [Room SQLite](https://developer.android.com/training/data-storage/room)
@@ -31,7 +31,7 @@ The mobile app serves as a gateway to the **Dukatrack Desktop Pro** version. Adv
 - **Navigation**: Compose Navigation
 - **Asynchronous**: Kotlin Coroutines & Flow
 
-## 🏁 Getting Started
+##Getting Started
 
 ### Prerequisites
 - Android Studio Ladybug (or newer)
@@ -47,5 +47,5 @@ The mobile app serves as a gateway to the **Dukatrack Desktop Pro** version. Adv
 3. Let Gradle sync and download dependencies.
 4. Run the app on an emulator or physical device (API Level 26+ recommended).
 
-## 📄 License
+## License
 This project is licensed under the MIT License - see the LICENSE file for details.
